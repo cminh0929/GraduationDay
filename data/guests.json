@@ -462,5 +462,15 @@
     "isActive": true,
     "createdAt": "2026-10-14T10:38:24.900Z",
     "openedCount": 0
+  },
+  {
+    "id": "guest_0047",
+    "linkId": "SXNE",
+    "code": "CM-MINHKHOI",
+    "guestName": "Đặng Minh Khôi",
+    "salutation": "Bạn",
+    "isActive": true,
+    "createdAt": "2026-10-14T10:53:16.679Z",
+    "openedCount": 0
   }
 ]
