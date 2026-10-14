@@ -6,7 +6,6 @@ import { TdtuLogo } from './TdtuLogo.tsx';
 import { ClassOf2026Medallion, GraduationCapIcon } from './SunflowerCapMotif.tsx';
 import { GraduationHeroIllustration } from './GraduationHeroIllustration.tsx';
 import { LeftBotanicalOrnament, RightBotanicalOrnament } from './AcademicBotanicalOrnaments.tsx';
-import { LeftAcademicWatermarkPanel, RightTdtuStolePanel } from './DesktopBackgroundPanels.tsx';
 import { Calendar, MapPin, Share2, Check, ExternalLink } from 'lucide-react';
 
 interface PersonalizedInvitationProps {
@@ -72,25 +71,14 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
   };
 
   return (
-    <section id="invitation" className="relative py-8 sm:py-14 px-4 sm:px-6 lg:px-8 mx-auto w-full">
-      <div className="relative max-w-5xl mx-auto">
-        {/* Left Side Desktop Background Watermark Panel (CLASS OF 2026) */}
-        <div className="hidden xl:flex absolute -left-20 2xl:-left-28 top-6 bottom-6 w-16 2xl:w-20 pointer-events-none z-0">
-          <LeftAcademicWatermarkPanel />
-        </div>
-
-        {/* Right Side Desktop Background Panel (TDTU Graduation Sash / Stole) */}
-        <div className="hidden xl:flex absolute -right-20 2xl:-right-28 top-6 bottom-6 w-16 2xl:w-20 pointer-events-none z-0">
-          <RightTdtuStolePanel />
-        </div>
-
-        {/* Main Luxury Academic Card */}
-        <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="card-academic-gold-border rounded-2xl shadow-xl overflow-hidden bg-[#FCFAF6] relative z-10"
-        >
+    <section id="invitation" className="relative py-8 sm:py-14 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+      {/* Main Luxury Academic Card */}
+      <motion.div
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="card-academic-gold-border rounded-2xl shadow-xl overflow-hidden bg-[#FCFAF6] relative"
+      >
         {/* Left Ambient Botanical Ornament (gentle breeze sway) */}
         <div className="absolute top-24 sm:top-28 left-0 sm:left-1 lg:left-2 w-10 sm:w-16 lg:w-20 pointer-events-none z-0 opacity-40 sm:opacity-70 lg:opacity-85">
           <LeftBotanicalOrnament className="w-full" />
@@ -295,7 +283,6 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
           )}
           <span>{copiedLink ? 'Đã sao chép link' : 'Sao chép link thiệp'}</span>
         </button>
-      </div>
       </div>
     </section>
   );
