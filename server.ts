@@ -146,10 +146,53 @@ function toPublicGuest(guest: GuestRecord) {
   };
 }
 
+const GOOGLE_SHEET_WEBHOOK_URL =
+  process.env.GOOGLE_SHEET_WEBHOOK_URL?.trim() ||
+  'https://script.google.com/macros/s/AKfycbwtsB9V8TfGCritS0rE5xnbeZNsYj5-3u8bsJEImgKK7gim9EHV2w0GC8-CZpFFyF_0qQ/exec';
+
+interface GoogleSheetPayload {
+  action: 'open' | 'wish';
+  guestName: string;
+  salutation?: string;
+  code: string;
+  linkId?: string;
+  status?: string;
+  message?: string;
+  timestamp: string;
+  openedCount?: number;
+}
+
+async function syncToGoogleSheet(payload: GoogleSheetPayload): Promise<void> {
+  if (!GOOGLE_SHEET_WEBHOOK_URL) return;
+  try {
+    const res = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      console.warn(`Google Sheet webhook responded with status ${res.status}`);
+    }
+  } catch (err) {
+    console.warn('Failed syncing to Google Sheet:', err);
+  }
+}
+
 function recordInvitationOpen(guest: GuestRecord, guests: GuestRecord[]) {
   guest.openedCount = (guest.openedCount || 0) + 1;
   guest.lastOpenedAt = new Date().toISOString();
   saveGuests(guests);
+
+  // Sync open event to Google Sheets asynchronously
+  syncToGoogleSheet({
+    action: 'open',
+    guestName: guest.guestName,
+    salutation: guest.salutation || '',
+    code: guest.code,
+    linkId: guest.linkId,
+    timestamp: guest.lastOpenedAt,
+    openedCount: guest.openedCount,
+  }).catch((err) => console.warn('Google Sheet open sync error:', err));
 }
 
 // Admin secret token must be supplied outside source control.
@@ -262,33 +305,6 @@ app.get('/api/invitations/home/:linkId', (req: Request, res: Response) => {
   return res.json({ valid: true, guest: toPublicGuest(matched) });
 });
 
-const GOOGLE_SHEET_WEBHOOK_URL =
-  process.env.GOOGLE_SHEET_WEBHOOK_URL?.trim() ||
-  'https://script.google.com/macros/s/AKfycbwtsB9V8TfGCritS0rE5xnbeZNsYj5-3u8bsJEImgKK7gim9EHV2w0GC8-CZpFFyF_0qQ/exec';
-
-async function syncWishToGoogleSheet(payload: {
-  guestName: string;
-  salutation?: string;
-  code: string;
-  status: string;
-  message: string;
-  timestamp: string;
-}): Promise<void> {
-  if (!GOOGLE_SHEET_WEBHOOK_URL) return;
-  try {
-    const res = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      console.warn(`Google Sheet webhook responded with status ${res.status}`);
-    }
-  } catch (err) {
-    console.warn('Failed syncing wish to Google Sheet:', err);
-  }
-}
-
 // 2. Guest RSVP / Wishes
 app.post('/api/invitations/rsvp', async (req: Request, res: Response) => {
   const { code, status, message } = req.body || {};
@@ -310,7 +326,8 @@ app.post('/api/invitations/rsvp', async (req: Request, res: Response) => {
   saveGuests(guests);
 
   // Sync to Google Sheet asynchronously
-  syncWishToGoogleSheet({
+  syncToGoogleSheet({
+    action: 'wish',
     guestName: matched.guestName,
     salutation: matched.salutation || '',
     code: matched.code,
