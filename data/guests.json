@@ -442,5 +442,15 @@
     "isActive": true,
     "createdAt": "2026-10-14T10:35:09.356Z",
     "openedCount": 0
+  },
+  {
+    "id": "guest_0045",
+    "linkId": "JUUK",
+    "code": "CM-THIDAT",
+    "guestName": "Chị Thi & Anh Đạt",
+    "salutation": "Anh Chị",
+    "isActive": true,
+    "createdAt": "2026-10-14T10:36:05.318Z",
+    "openedCount": 0
   }
 ]
