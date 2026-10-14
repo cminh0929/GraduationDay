@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { EVENT_CONFIG } from '../config/event.ts';
 import { getGuestInvitationUrl } from '../config/guestUrl.ts';
@@ -6,22 +6,20 @@ import { TdtuLogo } from './TdtuLogo.tsx';
 import { ClassOf2026Medallion, GraduationCapIcon } from './SunflowerCapMotif.tsx';
 import { GraduationHeroIllustration } from './GraduationHeroIllustration.tsx';
 import { LeftBotanicalOrnament, RightBotanicalOrnament } from './AcademicBotanicalOrnaments.tsx';
-import { Calendar, MapPin, Share2, Check, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, ExternalLink } from 'lucide-react';
 
 interface PersonalizedInvitationProps {
   guestName: string;
   salutation?: string;
-  guestCode: string;
+  guestCode?: string;
   linkId: string;
 }
 
 export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
   guestName,
   salutation = 'Bạn',
-  guestCode,
   linkId,
 }) => {
-  const [copiedLink, setCopiedLink] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
   // Helper to build Google Calendar URL
@@ -38,14 +36,6 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
     // 2026-10-17 09:00 to 12:00 in Asia/Ho_Chi_Minh (UTC+7) -> 20261017T020000Z / 20261017T050000Z
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=20261017T020000Z/20261017T050000Z&details=${details}&location=${location}`;
   })();
-
-  const handleCopyLink = () => {
-    const url = getGuestInvitationUrl(linkId);
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2500);
-    });
-  };
 
   // Helper to split multi-person names (e.g. Cha & Me) to match mockup typography hierarchy
   const renderFormattedGuestName = (name: string) => {
@@ -259,31 +249,6 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
           </div>
         </div>
       </motion.div>
-
-      {/* ========================================================= */}
-      {/* INVITATION ACTIONS & VERIFICATION ROW                     */}
-      {/* ========================================================= */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mt-5 px-1 text-xs text-slate-500">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-slate-500">MÃ THIỆP:</span>
-          <span className="font-mono font-semibold text-[#15489D] bg-[#15489D]/10 px-2 py-0.5 rounded-sm">
-            {guestCode}
-          </span>
-          <span className="text-emerald-700 font-medium">· Đã xác thực</span>
-        </div>
-
-        <button
-          onClick={handleCopyLink}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D6B274]/50 hover:border-[#15489D] text-slate-700 hover:text-[#15489D] rounded-md transition-colors shadow-2xs cursor-pointer"
-        >
-          {copiedLink ? (
-            <Check className="w-3.5 h-3.5 text-emerald-600" />
-          ) : (
-            <Share2 className="w-3.5 h-3.5 text-[#D6B274]" />
-          )}
-          <span>{copiedLink ? 'Đã sao chép link' : 'Sao chép link thiệp'}</span>
-        </button>
-      </div>
     </section>
   );
 };
