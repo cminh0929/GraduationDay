@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import { Guest } from '../types/index.ts';
+import { getGuestInvitationUrl, isLocalUrl } from '../config/guestUrl.ts';
 import {
   X,
   Lock,
@@ -8,15 +10,243 @@ import {
   Check,
   Download,
   Trash2,
-  Power,
   RefreshCw,
   Search,
   ExternalLink,
-  MessageSquare,
   ShieldCheck,
   AlertCircle,
   Loader2,
+  QrCode,
 } from 'lucide-react';
+
+interface GuestQrModalProps {
+  guest: Guest;
+  onClose: () => void;
+}
+
+const GuestQrModal: React.FC<GuestQrModalProps> = ({ guest, onClose }) => {
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const destinationUrl = getGuestInvitationUrl(guest.linkId);
+  const isLocal = isLocalUrl(destinationUrl);
+
+  useEffect(() => {
+    let isCurrent = true;
+    setIsGenerating(true);
+
+    QRCode.toDataURL(destinationUrl, {
+      width: 280,
+      margin: 2,
+      color: {
+        dark: '#15489D',
+        light: '#FFFFFF',
+      },
+    })
+      .then((url) => {
+        if (isCurrent) {
+          setQrDataUrl(url);
+          setIsGenerating(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to generate QR code', err);
+        if (isCurrent) setIsGenerating(false);
+      });
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      isCurrent = false;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [destinationUrl, onClose]);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(destinationUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleDownloadPng = async () => {
+    try {
+      setIsDownloading(true);
+      // High resolution export (1000x1000px)
+      const highResDataUrl = await QRCode.toDataURL(destinationUrl, {
+        width: 1000,
+        margin: 3,
+        color: {
+          dark: '#15489D',
+          light: '#FFFFFF',
+        },
+      });
+
+      const safeName = guest.guestName
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+      const filename = `graduation-qr-${guest.linkId}-${safeName || 'guest'}.png`;
+
+      const link = document.createElement('a');
+      link.href = highResDataUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Failed to download QR code', err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl w-full max-w-sm sm:max-w-md shadow-2xl border border-[#D6B274]/40 overflow-hidden my-auto flex flex-col animate-fadeIn"
+      >
+        {/* Header */}
+        <div className="px-5 py-4 bg-[#17243A] text-white flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5">
+            <QrCode className="w-5 h-5 text-[#D6B274]" />
+            <div>
+              <h3 className="text-sm sm:text-base font-serif font-bold text-white leading-tight">
+                Mã QR thiệp mời
+              </h3>
+              <p className="text-[11px] text-slate-300">
+                Quét mã để mở thiệp mời cá nhân hóa
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 text-slate-400 hover:text-white rounded-md transition-colors cursor-pointer"
+            aria-label="Đóng"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 sm:p-6 text-center space-y-4">
+          {/* Guest Identity */}
+          <div className="space-y-0.5">
+            <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">
+              Khách mời · Mã {guest.code}
+            </span>
+            <h4 className="text-lg sm:text-xl font-serif font-bold text-[#15489D]">
+              {guest.salutation && guest.salutation !== 'Bạn' && (
+                <span className="text-slate-600 font-normal italic text-sm mr-1">
+                  {guest.salutation}
+                </span>
+              )}
+              {guest.guestName}
+            </h4>
+          </div>
+
+          {/* Inactive Notice */}
+          {!guest.isActive && (
+            <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start gap-2 text-left">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+              <span>
+                <strong>Mã mời đang vô hiệu hóa (Disabled):</strong> Khách quét mã sẽ chưa thể xem thiệp nếu chưa được kích hoạt lại trong bảng quản trị.
+              </span>
+            </div>
+          )}
+
+          {/* Large QR Display Container */}
+          <div className="relative mx-auto w-64 h-64 sm:w-72 sm:h-72 p-3 bg-white rounded-xl border border-[#D6B274]/40 shadow-xs flex items-center justify-center">
+            {isGenerating ? (
+              <div className="flex flex-col items-center justify-center text-slate-400 space-y-2">
+                <Loader2 className="w-8 h-8 animate-spin text-[#15489D]" />
+                <span className="text-xs font-mono">Đang tạo mã QR...</span>
+              </div>
+            ) : qrDataUrl ? (
+              <img
+                src={qrDataUrl}
+                alt={`Mã QR thiệp mời của ${guest.guestName}`}
+                className="w-full h-full object-contain select-none"
+              />
+            ) : (
+              <span className="text-xs text-red-500 font-mono">
+                Không thể tạo mã QR.
+              </span>
+            )}
+          </div>
+
+          {/* Destination URL Display */}
+          <div className="space-y-1 text-left">
+            <div className="flex items-center justify-between text-[11px] text-slate-500">
+              <span className="font-mono text-[#15489D] font-semibold">/home/{guest.linkId}</span>
+              <span className="text-slate-400">Đích đến</span>
+            </div>
+            <div className="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-700 break-all select-all">
+              <span className="truncate flex-1">{destinationUrl}</span>
+            </div>
+          </div>
+
+          {/* Localhost Warning */}
+          {isLocal && (
+            <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800 text-left">
+              ⚠️ <strong>Lưu ý:</strong> Liên kết đang trỏ về <code className="font-mono font-bold">localhost</code>. Khách mời quét bằng điện thoại ngoài máy tính này sẽ không truy cập được. Để khách mời quét từ xa, hãy cấu hình <code className="font-mono font-bold">VITE_INVITE_BASE_URL</code> trong file <code className="font-mono font-bold">.env</code>.
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="grid grid-cols-2 gap-2.5 pt-2">
+            <button
+              onClick={handleDownloadPng}
+              disabled={isDownloading || !qrDataUrl}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-[#15489D] hover:bg-[#113A7E] text-white text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-60"
+            >
+              {isDownloading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Đang tải...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Tải QR PNG</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleCopyLink}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border border-slate-300 hover:border-[#15489D] text-slate-700 hover:text-[#15489D] text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-xs"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-700">Đã sao chép</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Sao chép liên kết</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface AdminPanelProps {
   isOpen: boolean;
@@ -38,12 +268,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [isLoadingGuests, setIsLoadingGuests] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Selected guest for QR Modal preview
+  const [selectedQrGuest, setSelectedQrGuest] = useState<Guest | null>(null);
+
   // New guest form
   const [newGuestName, setNewGuestName] = useState('');
   const [newGuestSalutation, setNewGuestSalutation] = useState('Bạn');
   const [customCode, setCustomCode] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [addMessage, setAddMessage] = useState('');
+  const [lastCreatedGuest, setLastCreatedGuest] = useState<Guest | null>(null);
 
   // Feedback states
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -107,6 +341,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setToken('');
     sessionStorage.removeItem('admin_token');
     setGuests([]);
+    setSelectedQrGuest(null);
   };
 
   const handleAddGuest = async (e: React.FormEvent) => {
@@ -115,6 +350,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     setIsAdding(true);
     setAddMessage('');
+    setLastCreatedGuest(null);
 
     try {
       const res = await fetch('/api/admin/guests', {
@@ -135,8 +371,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         setGuests((prev) => [data.guest, ...prev]);
         setNewGuestName('');
         setCustomCode('');
+        setLastCreatedGuest(data.guest);
         setAddMessage(`Đã tạo link /home/${data.guest.linkId} cho ${data.guest.guestName}`);
-        setTimeout(() => setAddMessage(''), 4000);
+        setTimeout(() => setAddMessage(''), 6000);
       } else {
         setAddMessage(data.error || 'Lỗi khi tạo mã.');
       }
@@ -161,6 +398,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         setGuests((prev) =>
           prev.map((g) => (g.id === guest.id ? { ...g, isActive: !g.isActive } : g))
         );
+        // Also update selected QR guest if currently opened
+        setSelectedQrGuest((prev) =>
+          prev && prev.id === guest.id ? { ...prev, isActive: !prev.isActive } : prev
+        );
       }
     } catch (err) {
       console.error(err);
@@ -176,6 +417,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       });
       if (res.ok) {
         setGuests((prev) => prev.filter((g) => g.id !== id));
+        if (selectedQrGuest?.id === id) setSelectedQrGuest(null);
       }
     } catch (err) {
       console.error(err);
@@ -190,14 +432,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const exportCsv = () => {
     if (guests.length === 0) return;
-    const origin = window.location.origin;
     const headers = ['Link ID', 'Mã Mời', 'Xưng Hô', 'Tên Khách', 'Link Trực Tiếp', 'Trạng Thái', 'Lượt Mở', 'RSVP', 'Lời Chúc'];
     const rows = guests.map((g) => [
       g.linkId,
       g.code,
       g.salutation || '',
       `"${g.guestName.replace(/"/g, '""')}"`,
-      `${origin}/home/${g.linkId}`,
+      getGuestInvitationUrl(g.linkId),
       g.isActive ? 'Kích hoạt' : 'Vô hiệu hóa',
       g.openedCount || 0,
       g.rsvpStatus || 'Chưa phản hồi',
@@ -390,9 +631,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </form>
 
                 {addMessage && (
-                  <p className="text-xs text-emerald-700 mt-2 font-medium">
-                    {addMessage}
-                  </p>
+                  <div className="flex items-center gap-2 mt-2 text-xs">
+                    <p className="text-emerald-700 font-medium">
+                      {addMessage}
+                    </p>
+                    {lastCreatedGuest && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedQrGuest(lastCreatedGuest)}
+                        className="inline-flex items-center gap-1 text-[#15489D] font-semibold underline hover:text-[#113A7E] cursor-pointer"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Xem mã QR</span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -438,8 +691,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           </tr>
                         ) : (
                           filteredGuests.map((guest) => {
-                            const origin = window.location.origin;
-                            const directUrl = `${origin}/home/${guest.linkId}`;
+                            const directUrl = getGuestInvitationUrl(guest.linkId);
 
                             return (
                               <tr
@@ -497,24 +749,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 </td>
                                 <td className="py-2.5 px-3 text-right">
                                   <div className="inline-flex items-center gap-1.5">
-                                    {/* Test this card in app */}
+                                    {/* 1. Test this card in app */}
                                     {onSelectCodeToTest && (
                                       <button
                                         onClick={() => {
                                           onSelectCodeToTest(guest.code);
                                           onClose();
                                         }}
-                                        className="p-1 text-slate-400 hover:text-[#15489D] rounded cursor-pointer"
+                                        className="p-1 text-slate-400 hover:text-[#15489D] rounded cursor-pointer transition-colors"
                                         title="Xem thiệp này"
                                       >
                                         <ExternalLink className="w-3.5 h-3.5" />
                                       </button>
                                     )}
 
-                                    {/* Copy direct link */}
+                                    {/* 2. Copy direct link */}
                                     <button
                                       onClick={() => copyToClipboard(directUrl, `url_${guest.id}`)}
-                                      className="p-1 text-slate-400 hover:text-[#15489D] rounded cursor-pointer"
+                                      className="p-1 text-slate-400 hover:text-[#15489D] rounded cursor-pointer transition-colors"
                                       title="Sao chép link cá nhân hóa"
                                     >
                                       {copiedId === `url_${guest.id}` ? (
@@ -524,10 +776,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                       )}
                                     </button>
 
-                                    {/* Delete guest */}
+                                    {/* 3. View QR Code */}
+                                    <button
+                                      onClick={() => setSelectedQrGuest(guest)}
+                                      className="p-1 text-slate-400 hover:text-[#15489D] rounded cursor-pointer transition-colors"
+                                      title="Mã QR thiệp mời"
+                                    >
+                                      <QrCode className="w-3.5 h-3.5" />
+                                    </button>
+
+                                    {/* 4. Delete guest */}
                                     <button
                                       onClick={() => handleDeleteGuest(guest.id)}
-                                      className="p-1 text-slate-400 hover:text-[#E44735] rounded cursor-pointer"
+                                      className="p-1 text-slate-400 hover:text-[#E44735] rounded cursor-pointer transition-colors"
                                       title="Xóa"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -547,6 +808,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           )}
         </div>
       </div>
+
+      {/* Guest QR Code Preview Modal */}
+      {selectedQrGuest && (
+        <GuestQrModal
+          guest={selectedQrGuest}
+          onClose={() => setSelectedQrGuest(null)}
+        />
+      )}
     </div>
   );
 };

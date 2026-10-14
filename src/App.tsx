@@ -6,6 +6,7 @@ import { Countdown } from './components/Countdown.tsx';
 import { LocationSection } from './components/LocationSection.tsx';
 import { ClosingSection } from './components/ClosingSection.tsx';
 import { RsvpSection } from './components/RsvpSection.tsx';
+import { AdminPanel } from './components/AdminPanel.tsx';
 import { EVENT_CONFIG } from './config/event.ts';
 
 type CurrentGuest = {
@@ -22,24 +23,179 @@ export default function App() {
   const [currentGuest, setCurrentGuest] = useState<CurrentGuest | null>(null);
   const [isResolvingLink, setIsResolvingLink] = useState(false);
   const [linkError, setLinkError] = useState('');
+  const [isAdminOpen, setIsAdminOpen] = useState(() => {
+    return typeof window !== 'undefined' && window.location.pathname === '/admin';
+  });
+  const activeTimeoutsRef = React.useRef<ReturnType<typeof setTimeout>[]>([]);
+  const hasCelebratedRef = React.useRef(false);
 
-  const fireGentleConfetti = () => {
+  useEffect(() => {
+    const handlePopState = () => {
+      setIsAdminOpen(window.location.pathname === '/admin');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Grand Graduation Fireworks Celebration
+  const fireGrandCelebration = () => {
+    if (typeof window === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (hasCelebratedRef.current) return;
+    hasCelebratedRef.current = true;
 
-    try {
+    // Clear any previous scheduled bursts
+    activeTimeoutsRef.current.forEach((t) => clearTimeout(t));
+    activeTimeoutsRef.current = [];
+
+    const isMobile = window.innerWidth < 768;
+    const scale = isMobile ? 0.55 : 1.0;
+
+    // Official event palette
+    const colors = ['#15489D', '#D6B274', '#F5B700', '#FFFFFF', '#E44735'];
+    const goldWhiteColors = ['#D6B274', '#F5B700', '#FFFFFF'];
+    const navyGoldColors = ['#15489D', '#D6B274', '#FFFFFF'];
+
+    const scheduleBurst = (delayMs: number, fn: () => void) => {
+      const id = setTimeout(() => {
+        try {
+          fn();
+        } catch {
+          // Keep invitation intact even if confetti fails
+        }
+      }, delayMs);
+      activeTimeoutsRef.current.push(id);
+    };
+
+    // Staggered Timeline (Total celebration ~ 2.5 - 3.0s):
+    // Stage 1 (0ms): Dual lower-corner fireworks launch
+    scheduleBurst(0, () => {
+      // Left lower corner cannon
       confetti({
-        particleCount: 40,
-        spread: 60,
-        origin: { y: 0.6 },
-        colors: ['#D6B274', '#15489D', '#F5B700', '#FFFFFF'],
-        ticks: 200,
-        gravity: 0.8,
+        particleCount: Math.round(40 * scale),
+        angle: 60,
+        spread: 55,
+        startVelocity: 55,
+        origin: { x: 0.12, y: 0.88 },
+        colors,
+        shapes: ['circle', 'square'],
+        ticks: 240,
+        gravity: 0.85,
         scalar: 0.9,
         disableForReducedMotion: true,
       });
-    } catch {
-      // The invitation remains fully usable when animation is unavailable.
-    }
+
+      // Right lower corner cannon
+      confetti({
+        particleCount: Math.round(40 * scale),
+        angle: 120,
+        spread: 55,
+        startVelocity: 55,
+        origin: { x: 0.88, y: 0.88 },
+        colors,
+        shapes: ['circle', 'square'],
+        ticks: 240,
+        gravity: 0.85,
+        scalar: 0.9,
+        disableForReducedMotion: true,
+      });
+    });
+
+    // Stage 2 (280ms): Fast star-shaped bursts rising from lower sides
+    scheduleBurst(280, () => {
+      confetti({
+        particleCount: Math.round(25 * scale),
+        angle: 65,
+        spread: 60,
+        startVelocity: 62,
+        origin: { x: 0.18, y: 0.82 },
+        colors: goldWhiteColors,
+        shapes: ['star'],
+        ticks: 220,
+        gravity: 0.9,
+        scalar: 1.2,
+        disableForReducedMotion: true,
+      });
+
+      confetti({
+        particleCount: Math.round(25 * scale),
+        angle: 115,
+        spread: 60,
+        startVelocity: 62,
+        origin: { x: 0.82, y: 0.82 },
+        colors: goldWhiteColors,
+        shapes: ['star'],
+        ticks: 220,
+        gravity: 0.9,
+        scalar: 1.2,
+        disableForReducedMotion: true,
+      });
+    });
+
+    // Stage 3 (700ms): Central Grand Explosion
+    scheduleBurst(700, () => {
+      // Full spread central burst
+      confetti({
+        particleCount: Math.round(65 * scale),
+        angle: 90,
+        spread: 100,
+        startVelocity: 45,
+        origin: { x: 0.5, y: 0.45 },
+        colors,
+        shapes: ['circle', 'square', 'star'],
+        ticks: 260,
+        gravity: 0.75,
+        scalar: 0.95,
+        disableForReducedMotion: true,
+      });
+
+      // Higher velocity golden stars burst
+      confetti({
+        particleCount: Math.round(30 * scale),
+        angle: 90,
+        spread: 125,
+        startVelocity: 55,
+        decay: 0.92,
+        origin: { x: 0.5, y: 0.45 },
+        colors: goldWhiteColors,
+        shapes: ['star'],
+        ticks: 200,
+        gravity: 0.8,
+        scalar: 1.25,
+        disableForReducedMotion: true,
+      });
+    });
+
+    // Stage 4 (1250ms): Gentle slow-falling golden shimmer rain
+    scheduleBurst(1250, () => {
+      confetti({
+        particleCount: Math.round(15 * scale),
+        angle: 85,
+        spread: 50,
+        startVelocity: 25,
+        origin: { x: 0.35, y: 0.32 },
+        colors: navyGoldColors,
+        shapes: ['circle', 'star'],
+        ticks: 200,
+        gravity: 0.65,
+        scalar: 0.8,
+        disableForReducedMotion: true,
+      });
+
+      confetti({
+        particleCount: Math.round(15 * scale),
+        angle: 95,
+        spread: 50,
+        startVelocity: 25,
+        origin: { x: 0.65, y: 0.32 },
+        colors: navyGoldColors,
+        shapes: ['circle', 'star'],
+        ticks: 200,
+        gravity: 0.65,
+        scalar: 0.8,
+        disableForReducedMotion: true,
+      });
+    });
   };
 
   useEffect(() => {
@@ -68,12 +224,17 @@ export default function App() {
       })
       .then((guest) => {
         setCurrentGuest(guest);
-        fireGentleConfetti();
+        fireGrandCelebration();
       })
       .catch((error) => {
         setLinkError(error instanceof Error ? error.message : 'Không thể mở liên kết thiệp mời.');
       })
       .finally(() => setIsResolvingLink(false));
+
+    return () => {
+      activeTimeoutsRef.current.forEach((t) => clearTimeout(t));
+      activeTimeoutsRef.current = [];
+    };
   }, []);
 
   return (
@@ -145,9 +306,32 @@ export default function App() {
             <span>{EVENT_CONFIG.student.faculty}</span>
             <span>·</span>
             <span>{EVENT_CONFIG.student.major}</span>
+            <span>·</span>
+            <button
+              onClick={() => {
+                setIsAdminOpen(true);
+                window.history.pushState({}, '', '/admin');
+              }}
+              className="hover:text-[#15489D] transition-colors cursor-pointer"
+            >
+              Quản trị
+            </button>
           </div>
         </div>
       </footer>
+
+      <AdminPanel
+        isOpen={isAdminOpen}
+        onClose={() => {
+          setIsAdminOpen(false);
+          if (window.location.pathname === '/admin') {
+            window.history.pushState({}, '', '/');
+          }
+        }}
+        onSelectCodeToTest={(code) => {
+          window.location.href = `/?code=${encodeURIComponent(code)}`;
+        }}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { EVENT_CONFIG } from '../config/event.ts';
-import { Calendar, BellRing, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface TimeLeft {
   days: number;
@@ -11,7 +12,61 @@ interface TimeLeft {
   isPast: boolean;
 }
 
+interface AnimatedDigitUnitProps {
+  label: string;
+  value: string | number;
+  delayIndex: number;
+  shouldReduceMotion: boolean | null;
+}
+
+const AnimatedDigitUnit: React.FC<AnimatedDigitUnitProps> = ({
+  label,
+  value,
+  delayIndex,
+  shouldReduceMotion,
+}) => {
+  return (
+    <motion.div
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{
+        duration: 0.45,
+        delay: shouldReduceMotion ? 0 : delayIndex * 0.07,
+        ease: 'easeOut',
+      }}
+      className="bg-white border border-[#D6B274]/40 rounded-xl p-4 sm:p-5 shadow-2xs flex flex-col items-center justify-center transition-colors hover:border-[#15489D]"
+    >
+      <div className="relative overflow-hidden h-10 sm:h-12 lg:h-14 w-full flex items-center justify-center">
+        {shouldReduceMotion ? (
+          <span className="font-mono tabular-nums text-3xl sm:text-4xl lg:text-[44px] font-bold text-[#15489D] block leading-none">
+            {value}
+          </span>
+        ) : (
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={String(value)}
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -8, opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="font-mono tabular-nums text-3xl sm:text-4xl lg:text-[44px] font-bold text-[#15489D] block leading-none"
+            >
+              {value}
+            </motion.span>
+          </AnimatePresence>
+        )}
+      </div>
+      <span className="text-[10px] sm:text-[11px] font-mono tracking-wider text-slate-500 uppercase mt-2">
+        {label}
+      </span>
+    </motion.div>
+  );
+};
+
 export const Countdown: React.FC = () => {
+  const shouldReduceMotion = useReducedMotion();
+
   // Target timestamp: 2026-10-17T09:00:00+07:00
   const targetDate = new Date(EVENT_CONFIG.event.dateIso);
   const targetTime = targetDate.getTime();
@@ -44,11 +99,27 @@ export const Countdown: React.FC = () => {
 
   useEffect(() => {
     setMounted(true);
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
 
-    return () => clearInterval(timer);
+    const updateCountdown = () => {
+      setTimeLeft(calculateTimeLeft());
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+
+    // Refresh immediately when returning from background tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateCountdown();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const formatNumber = (num: number): string => {
@@ -56,19 +127,28 @@ export const Countdown: React.FC = () => {
   };
 
   return (
-    <section id="countdown" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
+    <motion.section
+      id="countdown"
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center"
+    >
       <div className="card-academic-gold-border rounded-2xl p-6 sm:p-10 shadow-md">
-        {/* Section kicker */}
-        <div className="inline-flex items-center gap-2 text-xs font-mono tracking-widest text-[#15489D] uppercase mb-2">
-          <BellRing className="w-3.5 h-3.5 text-[#D6B274]" />
-          <span>ĐẾM NGƯỢC THỜI GIAN</span>
-        </div>
+        {/* Eyebrow Label */}
+        <p className="text-xs font-mono uppercase tracking-[0.2em] text-[#15489D] mb-2 font-medium">
+          ✦ ĐẾM NGƯỢC
+        </p>
 
+        {/* Level 1: Main Heading */}
         <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#17243A]">
-          Cột mốc Lễ Tốt Nghiệp 2026
+          Ngày tốt nghiệp đang đến gần
         </h2>
-        <p className="text-sm text-slate-600 mt-1 mb-8">
-          {EVENT_CONFIG.event.dayOfWeek}, {EVENT_CONFIG.event.displayDate} · {EVENT_CONFIG.event.displayTime} ({EVENT_CONFIG.event.timeZone})
+
+        {/* Level 2: Clean Event Date */}
+        <p className="text-xs sm:text-sm text-slate-500 font-sans mt-1.5 mb-8">
+          17.10.2026 · 09:00
         </p>
 
         {/* State 1: Graduation day has arrived */}
@@ -76,10 +156,10 @@ export const Countdown: React.FC = () => {
           <div className="py-8 px-6 bg-[#15489D]/10 rounded-xl border border-[#15489D]/30 max-w-lg mx-auto">
             <span className="text-4xl block mb-2">🎓</span>
             <h3 className="text-2xl font-serif font-bold text-[#15489D]">
-              Ngày tốt nghiệp đã đến!
+              Hôm nay là ngày tốt nghiệp!
             </h3>
-            <p className="text-sm text-slate-700 mt-2">
-              Chào mừng bạn đến với Trường Đại học Tôn Đức Thắng hôm nay!
+            <p className="text-sm text-slate-700 mt-2 font-serif italic">
+              Một cột mốc đáng nhớ đã đến. 🎓
             </p>
           </div>
         ) : mounted && timeLeft.isPast ? (
@@ -87,43 +167,42 @@ export const Countdown: React.FC = () => {
           <div className="py-8 px-6 bg-[#FAF7F0] rounded-xl border border-[#D6B274]/40 max-w-lg mx-auto">
             <Sparkles className="w-8 h-8 mx-auto text-[#D6B274] mb-2" />
             <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#17243A]">
-              Graduation Day — A Moment to Remember
+              Dấu mốc đáng nhớ · 17.10.2026
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 mt-2">
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 font-serif italic">
               Khoảnh khắc thiêng liêng đã hoàn thành rực rỡ. Cảm ơn tất cả mọi người đã luôn đồng hành!
             </p>
           </div>
         ) : (
-          /* State 3: Active Countdown Clock */
+          /* State 3: Active Countdown Clock with Smooth Digit Transition */
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-2xl mx-auto">
-            {[
-              { label: 'NGÀY', value: mounted ? timeLeft.days : 0 },
-              { label: 'GIỜ', value: mounted ? formatNumber(timeLeft.hours) : '00' },
-              { label: 'PHÚT', value: mounted ? formatNumber(timeLeft.minutes) : '00' },
-              { label: 'GIÂY', value: mounted ? formatNumber(timeLeft.seconds) : '00' },
-            ].map((unit, idx) => (
-              <div
-                key={idx}
-                className="bg-white border border-[#D6B274]/40 rounded-xl p-4 sm:p-5 shadow-2xs flex flex-col items-center justify-center transition-all hover:border-[#15489D]"
-              >
-                <span className="font-mono tabular-nums text-3xl sm:text-4xl lg:text-5xl font-bold text-[#15489D]">
-                  {unit.value}
-                </span>
-                <span className="text-[11px] font-mono tracking-wider text-slate-500 uppercase mt-2">
-                  {unit.label}
-                </span>
-              </div>
-            ))}
+            <AnimatedDigitUnit
+              label="NGÀY"
+              value={mounted ? formatNumber(timeLeft.days) : '00'}
+              delayIndex={0}
+              shouldReduceMotion={shouldReduceMotion}
+            />
+            <AnimatedDigitUnit
+              label="GIỜ"
+              value={mounted ? formatNumber(timeLeft.hours) : '00'}
+              delayIndex={1}
+              shouldReduceMotion={shouldReduceMotion}
+            />
+            <AnimatedDigitUnit
+              label="PHÚT"
+              value={mounted ? formatNumber(timeLeft.minutes) : '00'}
+              delayIndex={2}
+              shouldReduceMotion={shouldReduceMotion}
+            />
+            <AnimatedDigitUnit
+              label="GIÂY"
+              value={mounted ? formatNumber(timeLeft.seconds) : '00'}
+              delayIndex={3}
+              shouldReduceMotion={shouldReduceMotion}
+            />
           </div>
         )}
-
-        <div className="mt-8 text-xs text-slate-500 flex items-center justify-center gap-2">
-          <span>Target Timestamp:</span>
-          <code className="font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-700">
-            {EVENT_CONFIG.event.dateIso}
-          </code>
-        </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

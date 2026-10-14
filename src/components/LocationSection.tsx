@@ -1,13 +1,29 @@
 import React from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { EVENT_CONFIG } from '../config/event.ts';
-import { MapPin, Navigation, Compass, Car, Clock, ExternalLink } from 'lucide-react';
+import { MapPin, Navigation, Compass, Car, ExternalLink } from 'lucide-react';
 
 export const LocationSection: React.FC = () => {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
-    <section id="location" className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+    <motion.section
+      id="location"
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
+      className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto"
+    >
       <div className="card-academic-gold-border rounded-2xl p-6 sm:p-10 shadow-md">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
+        <motion.div
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          className="text-center max-w-2xl mx-auto mb-8 sm:mb-10"
+        >
           <div className="inline-flex items-center gap-1.5 text-xs font-mono tracking-widest text-[#15489D] uppercase mb-2">
             <Compass className="w-3.5 h-3.5 text-[#D6B274]" />
             <span>ĐỊA ĐIỂM TỔ CHỨC</span>
@@ -19,12 +35,18 @@ export const LocationSection: React.FC = () => {
             <MapPin className="w-4 h-4 text-[#E44735] shrink-0" />
             <span>{EVENT_CONFIG.location.address}</span>
           </p>
-        </div>
+        </motion.div>
 
         {/* Map & Guide Container */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Map Embed Frame (7 cols) */}
-          <div className="lg:col-span-7 rounded-xl overflow-hidden border border-[#D6B274]/40 bg-slate-100 min-h-[320px] relative shadow-inner">
+          {/* Map Embed Frame (7 cols) - Stagger 100ms */}
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: shouldReduceMotion ? 0 : 0.1, ease: 'easeOut' }}
+            className="lg:col-span-7 rounded-xl overflow-hidden border border-[#D6B274]/40 bg-slate-100 min-h-[320px] relative shadow-inner"
+          >
             <iframe
               title="Google Map TDTU Campus"
               width="100%"
@@ -37,9 +59,12 @@ export const LocationSection: React.FC = () => {
               )}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
             />
 
-            {/* Quick floating action */}
+            {/* Quick floating action with micro-interaction */}
             <div className="absolute bottom-3 right-3 z-10">
-              <a
+              <motion.a
+                whileHover={shouldReduceMotion ? undefined : { scale: 1.03 }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.97 }}
+                transition={{ duration: 0.15 }}
                 href={EVENT_CONFIG.location.googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -47,12 +72,18 @@ export const LocationSection: React.FC = () => {
               >
                 <Navigation className="w-3.5 h-3.5" />
                 <span>Mở Google Maps</span>
-              </a>
+              </motion.a>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Guide Tips (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between space-y-5 bg-[#FAF7F0] p-6 rounded-xl border border-[#D6B274]/30">
+          {/* Guide Tips (5 cols) - Stagger 200ms */}
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45, delay: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+            className="lg:col-span-5 flex flex-col justify-between space-y-5 bg-[#FAF7F0] p-6 rounded-xl border border-[#D6B274]/30"
+          >
             <div>
               <h3 className="text-base font-serif font-bold text-[#15489D] mb-3">
                 Chỉ dẫn dành cho khách mời
@@ -65,22 +96,19 @@ export const LocationSection: React.FC = () => {
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <Clock className="w-4 h-4 text-[#D6B274] shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Khung giờ khuyên nghị:</strong> Nên có mặt trước 08:30 sáng để thuận tiện gửi xe và chụp ảnh lưu niệm cùng tân cử nhân.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-[#E44735] shrink-0 mt-0.5" />
                   <span>
-                    <strong>Khuôn viên trường:</strong> Khu vực sảnh chính và quảng trường trung tâm là nơi lý tưởng để lưu giữ những bức ảnh kỷ niệm.
+                    <strong>Khuôn viên trường:</strong> Vô gọi cho Minh.
                   </span>
                 </li>
               </ul>
             </div>
 
             <div className="pt-4 border-t border-[#D6B274]/30">
-              <a
+              <motion.a
+                whileHover={shouldReduceMotion ? undefined : { scale: 1.02 }}
+                whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+                transition={{ duration: 0.15 }}
                 href={EVENT_CONFIG.location.googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -88,11 +116,11 @@ export const LocationSection: React.FC = () => {
               >
                 <ExternalLink className="w-4 h-4" />
                 <span>Xem đường đi trên Google Maps</span>
-              </a>
+              </motion.a>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

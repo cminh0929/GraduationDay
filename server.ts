@@ -11,12 +11,28 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 
-const DATA_DIR = path.resolve(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'guests.json');
+function getGuestsFilePath(): string {
+  const candidates = [
+    path.resolve(process.cwd(), 'data', 'guests.json'),
+    path.resolve(__dirname, 'data', 'guests.json'),
+    path.resolve(__dirname, '..', 'data', 'guests.json'),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return path.resolve(process.cwd(), 'data', 'guests.json');
+}
 
-// Ensure data folder and file exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure data directory exists if writable
+try {
+  const defaultDir = path.resolve(process.cwd(), 'data');
+  if (!fs.existsSync(defaultDir)) {
+    fs.mkdirSync(defaultDir, { recursive: true });
+  }
+} catch {
+  // Read-only filesystem on serverless environments
 }
 
 interface GuestRecord {
@@ -36,8 +52,9 @@ interface GuestRecord {
 
 function loadGuests(): GuestRecord[] {
   try {
-    if (fs.existsSync(DATA_FILE)) {
-      const content = fs.readFileSync(DATA_FILE, 'utf-8');
+    const dataFile = getGuestsFilePath();
+    if (fs.existsSync(dataFile)) {
+      const content = fs.readFileSync(dataFile, 'utf-8');
       return JSON.parse(content);
     }
   } catch (err) {
@@ -48,9 +65,14 @@ function loadGuests(): GuestRecord[] {
 
 function saveGuests(guests: GuestRecord[]): void {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(guests, null, 2), 'utf-8');
+    const dataFile = getGuestsFilePath();
+    const dir = path.dirname(dataFile);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(dataFile, JSON.stringify(guests, null, 2), 'utf-8');
   } catch (err) {
-    console.error('Failed writing guests file:', err);
+    console.warn('Filesystem write not persistent on serverless/read-only environment:', err);
   }
 }
 
@@ -72,7 +94,7 @@ function checkRateLimit(ip: string): boolean {
 }
 
 // Clean up stale rate limits every 10 mins
-setInterval(() => {
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of rateLimitMap.entries()) {
     if (entry.resetAt < now) {
@@ -80,6 +102,9 @@ setInterval(() => {
     }
   }
 }, 10 * 60 * 1000);
+if (cleanupTimer.unref) {
+  cleanupTimer.unref();
+}
 
 // CSPRNG code generator (CM-XXXXXX)
 function generateGuestCode(): string {
@@ -124,11 +149,31 @@ function recordInvitationOpen(guest: GuestRecord, guests: GuestRecord[]) {
 const ADMIN_PASSWORD = process.env.ADMIN_PIN?.trim();
 const ACTIVE_ADMIN_TOKENS = new Set<string>();
 
+function isValidAdminToken(token: string): boolean {
+  if (!token) return false;
+  if (ACTIVE_ADMIN_TOKENS.has(token)) return true;
+  if (!ADMIN_PASSWORD) return false;
+  try {
+    const [payload, signature] = token.split('.');
+    if (!payload || !signature) return false;
+    const expectedSig = crypto.createHmac('sha256', ADMIN_PASSWORD).update(payload).digest('hex');
+    if (signature === expectedSig) {
+      const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
+      if (data.exp && data.exp > Date.now()) {
+        return true;
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 // Middleware to authenticate admin
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-  if (!token || !ACTIVE_ADMIN_TOKENS.has(token)) {
+  if (!isValidAdminToken(token)) {
     return res.status(401).json({ error: 'Phiên quản trị không hợp lệ hoặc đã hết hạn.' });
   }
   next();
@@ -256,7 +301,11 @@ app.post('/api/admin/login', (req: Request, res: Response) => {
     });
   }
   if (password === ADMIN_PASSWORD) {
-    const token = crypto.randomBytes(32).toString('hex');
+    const payload = Buffer.from(
+      JSON.stringify({ admin: true, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 })
+    ).toString('base64url');
+    const signature = crypto.createHmac('sha256', ADMIN_PASSWORD).update(payload).digest('hex');
+    const token = `${payload}.${signature}`;
     ACTIVE_ADMIN_TOKENS.add(token);
     return res.json({ success: true, token });
   }
@@ -423,7 +472,12 @@ async function startServer() {
   });
 }
 
-startServer().catch((err) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+export { app, startServer };
+export default app;
+
+if (!process.env.VERCEL && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  startServer().catch((err) => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  });
+}

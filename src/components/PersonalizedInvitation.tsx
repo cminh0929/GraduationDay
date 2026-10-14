@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useReducedMotion, useInView } from 'motion/react';
 import { EVENT_CONFIG } from '../config/event.ts';
+import { getGuestInvitationUrl } from '../config/guestUrl.ts';
 import { TdtuLogo } from './TdtuLogo.tsx';
 import { WaxSealEmblem, GraduationCapIcon, DiplomaScrollIcon, SunflowerIcon } from './SunflowerCapMotif.tsx';
 import { Calendar, Clock, MapPin, Share2, Check, Terminal, ExternalLink } from 'lucide-react';
@@ -11,6 +13,112 @@ interface PersonalizedInvitationProps {
   linkId: string;
 }
 
+const CommitTerminal: React.FC = () => {
+  const [showCommitDetails, setShowCommitDetails] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(terminalRef, { once: true, margin: '-40px' });
+  const [typedCommand, setTypedCommand] = useState('');
+  const [typingComplete, setTypingComplete] = useState(false);
+
+  const fullCommand = 'git show --stat';
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    if (shouldReduceMotion) {
+      setTypedCommand(fullCommand);
+      setTypingComplete(true);
+      return;
+    }
+
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      currentIndex++;
+      setTypedCommand(fullCommand.slice(0, currentIndex));
+      if (currentIndex >= fullCommand.length) {
+        clearInterval(interval);
+        setTimeout(() => setTypingComplete(true), 120);
+      }
+    }, 45);
+
+    return () => clearInterval(interval);
+  }, [isInView, shouldReduceMotion]);
+
+  const commitLines = [
+    { text: `commit ${EVENT_CONFIG.student.commitHash}`, className: 'text-[#38BDF8]' },
+    {
+      text: `Author: ${EVENT_CONFIG.student.displayName} <${EVENT_CONFIG.student.gitUsername}@tdtu.edu.vn>`,
+      className: 'text-slate-400',
+    },
+    { text: 'Date: Sat Oct 17 09:00:00 2026 +0700', className: 'text-slate-400' },
+    {
+      text: 'feat(milestone): Bachelor of Science in Computer Science',
+      className: 'text-emerald-400 font-semibold pt-1',
+    },
+  ];
+
+  return (
+    <div
+      ref={terminalRef}
+      className="rounded-xl border border-slate-800 bg-[#0F172A] text-slate-300 p-4 font-mono text-xs shadow-md"
+    >
+      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="flex items-center gap-2 text-slate-400">
+          <Terminal className="w-3.5 h-3.5 text-[#D6B274]" />
+          <span className="text-[11px]">
+            {typedCommand}
+            {!typingComplete && (
+              <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-[#D6B274] animate-pulse align-middle" />
+            )}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCommitDetails(!showCommitDetails)}
+          className="text-[11px] text-[#D6B274] hover:underline cursor-pointer transition-colors"
+        >
+          {showCommitDetails ? 'Thu gọn' : 'Chi tiết commit'}
+        </button>
+      </div>
+
+      <div className="pt-3 space-y-1 text-[11.5px] leading-relaxed text-slate-300 min-h-[96px]">
+        {commitLines.map((line, idx) => (
+          <motion.p
+            key={idx}
+            initial={shouldReduceMotion ? false : { opacity: 0, x: -6 }}
+            animate={typingComplete ? { opacity: 1, x: 0 } : shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.22, delay: shouldReduceMotion ? 0 : idx * 0.08 }}
+            className={line.className}
+          >
+            {line.text}
+          </motion.p>
+        ))}
+
+        <AnimatePresence initial={false}>
+          {showCommitDetails && (
+            <motion.div
+              initial={shouldReduceMotion ? false : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="overflow-hidden"
+            >
+              <div className="pt-2 border-t border-slate-800 text-slate-400 space-y-1 text-[11px]">
+                <p>+ 140+ Credits Completed</p>
+                <p>+ Data Structures &amp; Algorithms [PASSED]</p>
+                <p>+ Software Engineering &amp; AI Systems [PASSED]</p>
+                <p>+ Graduation Thesis Defended Successfully [100%]</p>
+                <p className="text-[#D6B274]">+ Ready for New Horizons in Tech</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
 export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
   guestName,
   salutation = 'Bạn',
@@ -18,7 +126,7 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
   linkId,
 }) => {
   const [copiedLink, setCopiedLink] = useState(false);
-  const [showCommitDetails, setShowCommitDetails] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   // Helper to build Google Calendar URL
   const googleCalendarUrl = (() => {
@@ -26,7 +134,7 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
       `Lễ tốt nghiệp 2026 — Đặng Công Minh (Khoa học máy tính, TDTU)`
     );
     const details = encodeURIComponent(
-      `Lễ trao bằng tốt nghiệp cử nhân của Đặng Công Minh tại Trường Đại học Tôn Đức Thắng.\nKhách mời: ${guestName}\nThiệp mời trực tuyến: ${window.location.origin}/home/${linkId}`
+      `Lễ trao bằng tốt nghiệp cử nhân của Đặng Công Minh tại Trường Đại học Tôn Đức Thắng.\nKhách mời: ${guestName}\nThiệp mời trực tuyến: ${getGuestInvitationUrl(linkId)}`
     );
     const location = encodeURIComponent(
       `${EVENT_CONFIG.location.venueName}, ${EVENT_CONFIG.location.address}`
@@ -36,7 +144,7 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
   })();
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/home/${linkId}`;
+    const url = getGuestInvitationUrl(linkId);
     navigator.clipboard.writeText(url).then(() => {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
@@ -45,7 +153,13 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
 
   return (
     <section id="invitation" className="relative py-10 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-      <div className="mb-8 text-center animate-fadeIn">
+      {/* Salutation Header - Appears first */}
+      <motion.div
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="mb-8 text-center"
+      >
         <p className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-[#947229] mb-2">
           Một lời mời dành riêng cho bạn
         </p>
@@ -55,12 +169,22 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
         <p className="mt-3 text-sm sm:text-base text-slate-600 font-serif italic">
           Minh rất vui vì bạn đang có mặt ở đây để cùng sẻ chia cột mốc đặc biệt này.
         </p>
-      </div>
+      </motion.div>
 
-      {/* Main Luxury Academic Card */}
-      <div className="card-academic-gold-border rounded-2xl shadow-xl overflow-hidden bg-[#FCFAF6]">
-        {/* Decorative Top Accent Bar: TDTU Navy & Gold & Red */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#15489D] via-[#D6B274] to-[#E44735]" />
+      {/* Main Luxury Academic Card - Appears with 500ms fade-up */}
+      <motion.div
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.15, ease: 'easeOut' }}
+        className="card-academic-gold-border rounded-2xl shadow-xl overflow-hidden bg-[#FCFAF6]"
+      >
+        {/* Decorative Top Accent Bar: Reveal from left to right (650ms) */}
+        <motion.div
+          initial={shouldReduceMotion ? false : { scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.65, delay: shouldReduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="h-1.5 w-full bg-gradient-to-r from-[#15489D] via-[#D6B274] to-[#E44735] origin-left"
+        />
 
         <div className="p-6 sm:p-10 lg:p-14">
           {/* Header Institutional Lockup */}
@@ -76,7 +200,14 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
                   Graduation Class of 2026
                 </p>
               </div>
-              <WaxSealEmblem text="2026" className="w-14 h-14" />
+              {/* Wax Seal 2026 - Scale animation (450ms) */}
+              <motion.div
+                initial={shouldReduceMotion ? false : { scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.45, delay: shouldReduceMotion ? 0 : 0.45, ease: 'easeOut' }}
+              >
+                <WaxSealEmblem text="2026" className="w-14 h-14" />
+              </motion.div>
             </div>
           </div>
 
@@ -231,45 +362,7 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
               </div>
 
               {/* The "Final Commit" Interactive Terminal Box (CS Identity) */}
-              <div className="rounded-xl border border-slate-800 bg-[#0F172A] text-slate-300 p-4 font-mono text-xs shadow-md">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Terminal className="w-3.5 h-3.5 text-[#D6B274]" />
-                    <span className="text-[11px]">git show --stat</span>
-                  </div>
-                  <button
-                    onClick={() => setShowCommitDetails(!showCommitDetails)}
-                    className="text-[11px] text-[#D6B274] hover:underline cursor-pointer"
-                  >
-                    {showCommitDetails ? 'Thu gọn' : 'Chi tiết commit'}
-                  </button>
-                </div>
-
-                <div className="pt-3 space-y-1 text-[11.5px] leading-relaxed text-slate-300">
-                  <p className="text-[#38BDF8]">
-                    commit {EVENT_CONFIG.student.commitHash}
-                  </p>
-                  <p className="text-slate-400">
-                    Author: {EVENT_CONFIG.student.displayName} &lt;{EVENT_CONFIG.student.gitUsername}@tdtu.edu.vn&gt;
-                  </p>
-                  <p className="text-slate-400">
-                    Date: Sat Oct 17 09:00:00 2026 +0700
-                  </p>
-                  <p className="text-emerald-400 font-semibold pt-1">
-                    feat(milestone): Bachelor of Science in Computer Science
-                  </p>
-
-                  {showCommitDetails && (
-                    <div className="pt-2 border-t border-slate-800 text-slate-400 space-y-1 text-[11px] animate-fadeIn">
-                      <p>+ 140+ Credits Completed</p>
-                      <p>+ Data Structures &amp; Algorithms [PASSED]</p>
-                      <p>+ Software Engineering &amp; AI Systems [PASSED]</p>
-                      <p>+ Graduation Thesis Defended Successfully [100%]</p>
-                      <p className="text-[#D6B274]">+ Ready for New Horizons in Tech</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <CommitTerminal />
             </div>
           </div>
 
@@ -284,7 +377,7 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
             </span>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Invitation metadata and sharing actions live after the card. */}
       <div className="flex flex-wrap items-center justify-between gap-4 mt-6 text-xs text-slate-500">
