@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useReducedMotion, useInView } from 'motion/react';
+import React, { useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { EVENT_CONFIG } from '../config/event.ts';
 import { getGuestInvitationUrl } from '../config/guestUrl.ts';
 import { TdtuLogo } from './TdtuLogo.tsx';
-import { WaxSealEmblem, GraduationCapIcon, DiplomaScrollIcon, SunflowerIcon } from './SunflowerCapMotif.tsx';
-import { Calendar, Clock, MapPin, Share2, Check, Terminal, ExternalLink } from 'lucide-react';
+import { ClassOf2026Medallion, GraduationCapIcon } from './SunflowerCapMotif.tsx';
+import { GraduationHeroIllustration } from './GraduationHeroIllustration.tsx';
+import { Calendar, MapPin, Share2, Check, ExternalLink } from 'lucide-react';
 
 interface PersonalizedInvitationProps {
   guestName: string;
@@ -12,112 +13,6 @@ interface PersonalizedInvitationProps {
   guestCode: string;
   linkId: string;
 }
-
-const CommitTerminal: React.FC = () => {
-  const [showCommitDetails, setShowCommitDetails] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
-  const terminalRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(terminalRef, { once: true, margin: '-40px' });
-  const [typedCommand, setTypedCommand] = useState('');
-  const [typingComplete, setTypingComplete] = useState(false);
-
-  const fullCommand = 'git show --stat';
-
-  useEffect(() => {
-    if (!isInView) return;
-
-    if (shouldReduceMotion) {
-      setTypedCommand(fullCommand);
-      setTypingComplete(true);
-      return;
-    }
-
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      currentIndex++;
-      setTypedCommand(fullCommand.slice(0, currentIndex));
-      if (currentIndex >= fullCommand.length) {
-        clearInterval(interval);
-        setTimeout(() => setTypingComplete(true), 120);
-      }
-    }, 45);
-
-    return () => clearInterval(interval);
-  }, [isInView, shouldReduceMotion]);
-
-  const commitLines = [
-    { text: `commit ${EVENT_CONFIG.student.commitHash}`, className: 'text-[#38BDF8]' },
-    {
-      text: `Author: ${EVENT_CONFIG.student.displayName} <${EVENT_CONFIG.student.gitUsername}@tdtu.edu.vn>`,
-      className: 'text-slate-400',
-    },
-    { text: 'Date: Sat Oct 17 09:00:00 2026 +0700', className: 'text-slate-400' },
-    {
-      text: 'feat(milestone): Bachelor of Science in Computer Science',
-      className: 'text-emerald-400 font-semibold pt-1',
-    },
-  ];
-
-  return (
-    <div
-      ref={terminalRef}
-      className="rounded-xl border border-slate-800 bg-[#0F172A] text-slate-300 p-4 font-mono text-xs shadow-md"
-    >
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <div className="flex items-center gap-2 text-slate-400">
-          <Terminal className="w-3.5 h-3.5 text-[#D6B274]" />
-          <span className="text-[11px]">
-            {typedCommand}
-            {!typingComplete && (
-              <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-[#D6B274] animate-pulse align-middle" />
-            )}
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowCommitDetails(!showCommitDetails)}
-          className="text-[11px] text-[#D6B274] hover:underline cursor-pointer transition-colors"
-        >
-          {showCommitDetails ? 'Thu gọn' : 'Chi tiết commit'}
-        </button>
-      </div>
-
-      <div className="pt-3 space-y-1 text-[11.5px] leading-relaxed text-slate-300 min-h-[96px]">
-        {commitLines.map((line, idx) => (
-          <motion.p
-            key={idx}
-            initial={shouldReduceMotion ? false : { opacity: 0, x: -6 }}
-            animate={typingComplete ? { opacity: 1, x: 0 } : shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ duration: 0.22, delay: shouldReduceMotion ? 0 : idx * 0.08 }}
-            className={line.className}
-          >
-            {line.text}
-          </motion.p>
-        ))}
-
-        <AnimatePresence initial={false}>
-          {showCommitDetails && (
-            <motion.div
-              initial={shouldReduceMotion ? false : { opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: 'easeInOut' }}
-              className="overflow-hidden"
-            >
-              <div className="pt-2 border-t border-slate-800 text-slate-400 space-y-1 text-[11px]">
-                <p>+ 140+ Credits Completed</p>
-                <p>+ Data Structures &amp; Algorithms [PASSED]</p>
-                <p>+ Software Engineering &amp; AI Systems [PASSED]</p>
-                <p>+ Graduation Thesis Defended Successfully [100%]</p>
-                <p className="text-[#D6B274]">+ Ready for New Horizons in Tech</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-};
 
 export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
   guestName,
@@ -151,236 +46,213 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
     });
   };
 
+  // Helper to split multi-person names (e.g. Cha & Me) to match mockup typography hierarchy
+  const renderFormattedGuestName = (name: string) => {
+    if (name.includes('&')) {
+      const parts = name.split('&').map((p) => p.trim());
+      return (
+        <>
+          <span className="block text-[#15305B]">{parts[0]} &amp;</span>
+          <span className="block text-[#8B1E22] mt-0.5 sm:mt-1">{parts[1]}</span>
+        </>
+      );
+    }
+    if (name.includes(' và ')) {
+      const parts = name.split(' và ').map((p) => p.trim());
+      return (
+        <>
+          <span className="block text-[#15305B]">{parts[0]} &amp;</span>
+          <span className="block text-[#8B1E22] mt-0.5 sm:mt-1">{parts[1]}</span>
+        </>
+      );
+    }
+    return <span className="block text-[#15305B]">{name}</span>;
+  };
+
   return (
-    <section id="invitation" className="relative py-10 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-      {/* Salutation Header - Appears first */}
+    <section id="invitation" className="relative py-8 sm:py-14 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+      {/* Main Luxury Academic Card */}
       <motion.div
         initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="mb-8 text-center"
-      >
-        <p className="text-xs sm:text-sm font-mono uppercase tracking-[0.2em] text-[#947229] mb-2">
-          Một lời mời dành riêng cho bạn
-        </p>
-        <h1 className="text-3xl sm:text-5xl font-serif font-bold text-[#17243A] leading-tight">
-          Xin chào, <span className="text-[#15489D]">{guestName}</span>
-        </h1>
-        <p className="mt-3 text-sm sm:text-base text-slate-600 font-serif italic">
-          Minh rất vui vì bạn đang có mặt ở đây để cùng sẻ chia cột mốc đặc biệt này.
-        </p>
-      </motion.div>
-
-      {/* Main Luxury Academic Card - Appears with 500ms fade-up */}
-      <motion.div
-        initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.15, ease: 'easeOut' }}
         className="card-academic-gold-border rounded-2xl shadow-xl overflow-hidden bg-[#FCFAF6]"
       >
-        {/* Decorative Top Accent Bar: Reveal from left to right (650ms) */}
+        {/* Decorative Top Accent Bar: Reveal from left to right */}
         <motion.div
           initial={shouldReduceMotion ? false : { scaleX: 0 }}
           animate={{ scaleX: 1 }}
-          transition={{ duration: 0.65, delay: shouldReduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.65, delay: shouldReduceMotion ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="h-1.5 w-full bg-gradient-to-r from-[#15489D] via-[#D6B274] to-[#E44735] origin-left"
         />
 
-        <div className="p-6 sm:p-10 lg:p-14">
-          {/* Header Institutional Lockup */}
-          <div className="flex flex-col sm:flex-row items-center justify-between border-b border-[#D6B274]/30 pb-8 gap-6 text-center sm:text-left">
-            <TdtuLogo size="md" />
-
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="hidden sm:block text-right">
-                <p className="text-xs font-mono tracking-wider text-slate-500 uppercase">
+        <div className="p-5 sm:p-9 lg:p-12">
+          {/* ========================================================= */}
+          {/* 1. TOP CARD HEADER                                         */}
+          {/* ========================================================= */}
+          <div className="flex flex-row items-center justify-between border-b border-[#D6B274]/30 pb-6 sm:pb-7 gap-4">
+            {/* Left: TDTU Brand Lockup */}
+            <div className="flex items-center gap-3">
+              <TdtuLogo size="sm" />
+              <div className="hidden sm:block border-l border-[#D6B274]/40 pl-3 leading-tight">
+                <span className="text-[10px] font-sans tracking-[0.16em] uppercase text-slate-500 font-semibold block">
                   BACHELOR OF SCIENCE
-                </p>
-                <p className="text-xs font-serif italic text-[#15489D]">
-                  Graduation Class of 2026
-                </p>
+                </span>
+                <span className="text-[10px] font-mono text-[#D6B274] tracking-wider block">
+                  · 2026 ·
+                </span>
               </div>
-              {/* Wax Seal 2026 - Scale animation (450ms) */}
-              <motion.div
-                initial={shouldReduceMotion ? false : { scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.45, delay: shouldReduceMotion ? 0 : 0.45, ease: 'easeOut' }}
-              >
-                <WaxSealEmblem text="2026" className="w-14 h-14" />
-              </motion.div>
+            </div>
+
+            {/* Right: Commemorative Seal & Degree Lockup */}
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+              <div className="hidden md:flex flex-col text-right font-sans leading-tight">
+                <span className="text-[10.5px] font-semibold tracking-[0.18em] text-slate-500 uppercase">
+                  BACHELOR
+                </span>
+                <span className="text-[10.5px] font-semibold tracking-[0.18em] text-slate-500 uppercase">
+                  OF SCIENCE
+                </span>
+                <span className="text-[10px] text-[#D6B274] font-mono tracking-widest mt-0.5">
+                  · 2026 ·
+                </span>
+              </div>
+
+              <div className="hidden md:block h-9 w-px bg-[#D6B274]/35" />
+
+              <ClassOf2026Medallion className="w-12 h-12 sm:w-14 sm:h-14" />
             </div>
           </div>
 
-          {/* Grid Layout: Desktop 2-column Split / Mobile Single Column */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 mt-10 items-stretch">
-            {/* Left Column: Official Invitation Wording (7 cols on Desktop) */}
-            <div className="lg:col-span-7 flex flex-col justify-between space-y-8">
-              {/* Salutation & Guest Name */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="h-px w-8 bg-[#D6B274]" />
-                  <span className="text-xs sm:text-sm font-semibold tracking-widest uppercase text-[#947229]">
+          {/* ========================================================= */}
+          {/* 2 & 4. INVITATION HERO & ILLUSTRATION SECTION             */}
+          {/* ========================================================= */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 mt-7 sm:mt-9 items-center">
+            {/* Left Column: Invitation Wording & Personalized Name (7 cols on Desktop) */}
+            <div className="lg:col-span-7 flex flex-col justify-between space-y-5 sm:space-y-6">
+              {/* Eyebrow Label */}
+              <div>
+                <div className="flex items-center gap-2 mb-2 sm:mb-2.5">
+                  <span className="h-px w-6 sm:w-8 bg-[#D6B274]" />
+                  <span className="text-[11px] sm:text-xs font-semibold tracking-[0.22em] uppercase text-[#947229]">
                     TRÂN TRỌNG KÍNH MỜI
                   </span>
-                  <span className="h-px w-8 bg-[#D6B274]" />
+                  <span className="h-px w-6 sm:w-8 bg-[#D6B274]" />
                 </div>
 
-                <div className="pt-1">
-                  {salutation && salutation !== 'Bạn' && (
-                    <span className="block text-sm sm:text-base font-serif italic text-slate-600 mb-0.5">
-                      Kính gửi {salutation}
-                    </span>
-                  )}
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-extrabold text-[#15489D] tracking-tight leading-tight text-balance">
-                    <span className="invitation-name-highlight">{guestName}</span>
-                  </h2>
-                </div>
-
-                <p className="text-base sm:text-lg text-slate-700 font-serif leading-relaxed italic pt-2 border-l-2 border-[#D6B274] pl-4">
-                  "Đến chung vui và chia sẻ khoảnh khắc đáng nhớ cùng Đặng Công Minh trong ngày tốt nghiệp tại Trường Đại học Tôn Đức Thắng."
+                {/* Salutation */}
+                <p className="text-sm sm:text-base font-serif italic text-slate-600 mb-1">
+                  {salutation && salutation !== 'Bạn' ? `Kính gửi ${salutation}` : 'Thân gửi bạn'}
                 </p>
+
+                {/* Primary Guest Name: Serif, large, authoritative */}
+                <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-black tracking-tight leading-[1.18] text-balance">
+                  {renderFormattedGuestName(guestName)}
+                </h2>
+
+                {/* Subtle Gold Divider */}
+                <div className="w-full max-w-[280px] sm:max-w-[340px] h-px bg-gradient-to-r from-[#D6B274] via-[#D6B274]/60 to-transparent mt-3 mb-2" />
               </div>
 
-              {/* Host & Graduate Details */}
-              <div className="pt-4 space-y-2 border-t border-[#D6B274]/25">
-                <span className="text-xs font-mono uppercase tracking-widest text-slate-400">
-                  TÂN CỬ NHÂN
-                </span>
-                <h3 className="text-2xl sm:text-3xl font-serif font-bold text-[#17243A] tracking-normal">
-                  {EVENT_CONFIG.student.fullName}
-                </h3>
-                <div className="text-xs sm:text-sm text-slate-600 space-y-0.5">
-                  <p className="font-medium text-[#15489D]">
-                    {EVENT_CONFIG.student.faculty}
-                  </p>
-                  <p className="text-slate-700">
-                    Ngành {EVENT_CONFIG.student.major}
-                  </p>
-                  <p className="font-mono text-xs text-slate-500 pt-0.5">
-                    {EVENT_CONFIG.student.classCohort}
-                  </p>
-                </div>
-              </div>
-
-              {/* Date, Time & Venue Summary Block */}
-              <div className="bg-[#FAF7F0] border border-[#D6B274]/40 rounded-xl p-5 space-y-3.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Date & Time */}
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-white rounded-lg text-[#15489D] border border-[#D6B274]/30 shrink-0">
-                      <Calendar className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-mono text-slate-500 uppercase">THỜI GIAN</p>
-                      <p className="text-sm font-semibold text-[#17243A]">
-                        {EVENT_CONFIG.event.dayOfWeek} — {EVENT_CONFIG.event.displayDate}
-                      </p>
-                      <p className="text-xs text-slate-600 font-mono flex items-center gap-1 mt-0.5">
-                        <Clock className="w-3.5 h-3.5 text-[#D6B274]" />
-                        <span>{EVENT_CONFIG.event.displayTime}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Venue */}
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-white rounded-lg text-[#E44735] border border-[#D6B274]/30 shrink-0">
-                      <MapPin className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-mono text-slate-500 uppercase">ĐỊA ĐIỂM</p>
-                      <p className="text-sm font-semibold text-[#17243A]">
-                        {EVENT_CONFIG.location.venueName}
-                      </p>
-                      <p className="text-xs text-slate-600 leading-snug mt-0.5">
-                        {EVENT_CONFIG.location.address}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-2 flex flex-wrap gap-3">
-                  <a
-                    href={googleCalendarUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#15489D] hover:bg-[#113A7E] text-white text-xs font-medium rounded-md shadow-2xs transition-colors cursor-pointer"
-                  >
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Lưu vào Google Calendar</span>
-                  </a>
-                  <a
-                    href={EVENT_CONFIG.location.googleMapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-300 hover:border-[#15489D] text-slate-700 hover:text-[#15489D] text-xs font-medium rounded-md transition-colors cursor-pointer"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Xem đường đi (Google Maps)</span>
-                  </a>
-                </div>
+              {/* Supporting Quote / Ceremonial Message Panel */}
+              <div className="bg-[#FAF5ED] border-l-[3.5px] border-[#D6B274] rounded-r-lg p-4 sm:p-5 shadow-2xs">
+                <p className="text-sm sm:text-[15px] font-serif italic text-slate-700 leading-relaxed">
+                  “Đến chung vui và chia sẻ khoảnh khắc đáng nhớ cùng Đặng Công Minh trong ngày tốt nghiệp tại Trường Đại học Tôn Đức Thắng.”
+                </p>
               </div>
             </div>
 
-            {/* Right Column: Visual Artwork & The Final Commit (5 cols on Desktop) */}
-            <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
-              {/* Campus / Graduation Architectural Art Frame */}
-              <div className="relative rounded-xl overflow-hidden border border-[#D6B274]/50 bg-gradient-to-br from-[#17243A] to-[#15489D] text-white p-6 sm:p-8 flex flex-col justify-between min-h-[300px] shadow-inner">
-                {/* Background decorative watermark grid */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#FFFFFF_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-
-                <div className="relative z-10 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono tracking-widest text-[#D6B274] uppercase">
-                      MILESTONE COMMIT #2026
-                    </span>
-                    <SunflowerIcon className="w-6 h-6" />
-                  </div>
-
-                  <div className="pt-2">
-                    <h4 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-wide">
-                      THE FINAL COMMIT
-                    </h4>
-                    <p className="text-xs text-blue-200 font-mono mt-1">
-                      branch: {EVENT_CONFIG.student.branchName}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Central Academic Emblem Display */}
-                <div className="relative z-10 py-6 my-auto flex items-center justify-center gap-4">
-                  <GraduationCapIcon className="w-14 h-14 drop-shadow-md" />
-                  <div className="h-10 w-px bg-white/20" />
-                  <DiplomaScrollIcon className="w-14 h-14 drop-shadow-md" />
-                </div>
-
-                {/* Bottom Quote & Status */}
-                <div className="relative z-10 pt-4 border-t border-white/15 text-xs text-blue-100 flex items-center justify-between">
-                  <span>Khoa học máy tính</span>
-                  <span className="font-mono text-[#D6B274]">Status: GRADUATED</span>
-                </div>
-              </div>
-
-              {/* The "Final Commit" Interactive Terminal Box (CS Identity) */}
-              <CommitTerminal />
+            {/* Right Column: Hero Artwork (5 cols on Desktop, centered on Mobile) */}
+            <div className="lg:col-span-5 flex items-center justify-center py-2 lg:py-0">
+              <GraduationHeroIllustration className="w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] aspect-[4/3]" />
             </div>
           </div>
 
-          {/* Footer Floral & Academic filigree line */}
-          <div className="mt-12 pt-6 border-t border-[#D6B274]/30 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-4">
-            <div className="flex items-center gap-2">
-              <SunflowerIcon className="w-4 h-4" />
-              <span>Trân quý từng kỷ niệm tại giảng đường TDTU</span>
+          {/* Continuous Gold Divider */}
+          <div className="border-t border-[#D6B274]/35 my-7 sm:my-9" />
+
+          {/* ========================================================= */}
+          {/* 5 & 6. BOTTOM EVENT METADATA (3-Column on Desktop)        */}
+          {/* ========================================================= */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-6 lg:gap-8 items-start">
+            {/* Column 1: Tân Cử Nhân (4 cols) */}
+            <div className="lg:col-span-4 space-y-1">
+              <span className="text-[10px] sm:text-[11px] font-mono tracking-widest text-slate-400 uppercase block">
+                TÂN CỬ NHÂN
+              </span>
+              <h3 className="text-lg sm:text-xl font-serif font-bold text-[#15305B] tracking-tight">
+                {EVENT_CONFIG.student.fullName}
+              </h3>
+              <div className="text-xs text-slate-600 space-y-0.5 pt-0.5">
+                <p>{EVENT_CONFIG.student.faculty}</p>
+                <p>Ngành {EVENT_CONFIG.student.major}</p>
+              </div>
             </div>
-            <span className="font-mono text-slate-400 text-[11px]">
-              Tôn Đức Thắng University · 2026
-            </span>
+
+            {/* Column 2: Thời Gian (4 cols) */}
+            <div className="lg:col-span-4 sm:border-l sm:border-[#D6B274]/30 sm:pl-6 lg:pl-6 space-y-1">
+              <div className="flex items-center gap-1.5 text-slate-400 mb-0.5">
+                <Calendar className="w-3.5 h-3.5 text-[#15489D]" />
+                <span className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase">
+                  THỜI GIAN
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-[#17243A]">
+                {EVENT_CONFIG.event.dayOfWeek} — {EVENT_CONFIG.event.displayDate} · {EVENT_CONFIG.event.displayTime}
+              </p>
+              <div className="pt-1">
+                <a
+                  href={googleCalendarUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-[#15489D] hover:text-[#0F3574] hover:underline font-medium transition-colors cursor-pointer"
+                >
+                  <span>+ Lưu vào Google Calendar</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Column 3: Địa Điểm (4 cols) */}
+            <div className="lg:col-span-4 sm:col-span-2 lg:col-span-4 sm:border-l sm:border-[#D6B274]/30 sm:pl-6 lg:pl-6 space-y-1">
+              <div className="flex items-center gap-1.5 text-slate-400 mb-0.5">
+                <MapPin className="w-3.5 h-3.5 text-[#E44735]" />
+                <span className="text-[10px] sm:text-[11px] font-mono tracking-widest uppercase">
+                  ĐỊA ĐIỂM
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-[#17243A]">
+                {EVENT_CONFIG.location.venueName}
+              </p>
+              <p className="text-[11px] text-slate-500 leading-snug">
+                {EVENT_CONFIG.location.address}
+              </p>
+              <div className="pt-1">
+                <a
+                  href={EVENT_CONFIG.location.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-[#15489D] hover:text-[#0F3574] hover:underline font-medium transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>Xem đường đi (Google Maps)</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Center Filigree Ornament */}
+          <div className="flex items-center justify-center gap-3 pt-6 mt-6 sm:mt-8 border-t border-[#D6B274]/20">
+            <span className="h-px w-10 sm:w-16 bg-gradient-to-r from-transparent to-[#D6B274]/60" />
+            <GraduationCapIcon className="w-4 h-4 text-[#D6B274]" />
+            <span className="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-[#D6B274]/60" />
           </div>
         </div>
       </motion.div>
 
-      {/* Invitation metadata and sharing actions live after the card. */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mt-6 text-xs text-slate-500">
+      {/* ========================================================= */}
+      {/* INVITATION ACTIONS & VERIFICATION ROW                     */}
+      {/* ========================================================= */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-5 px-1 text-xs text-slate-500">
         <div className="flex items-center gap-2">
           <span className="font-mono text-slate-500">MÃ THIỆP:</span>
           <span className="font-mono font-semibold text-[#15489D] bg-[#15489D]/10 px-2 py-0.5 rounded-sm">
@@ -393,7 +265,11 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
           onClick={handleCopyLink}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#D6B274]/50 hover:border-[#15489D] text-slate-700 hover:text-[#15489D] rounded-md transition-colors shadow-2xs cursor-pointer"
         >
-          {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-[#D6B274]" />}
+          {copiedLink ? (
+            <Check className="w-3.5 h-3.5 text-emerald-600" />
+          ) : (
+            <Share2 className="w-3.5 h-3.5 text-[#D6B274]" />
+          )}
           <span>{copiedLink ? 'Đã sao chép link' : 'Sao chép link thiệp'}</span>
         </button>
       </div>

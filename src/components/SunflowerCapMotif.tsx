@@ -59,6 +59,33 @@ export const DiplomaScrollIcon: React.FC<{ className?: string }> = ({ className 
   </svg>
 );
 
+export const ClassOf2026Medallion: React.FC<{ className?: string }> = ({
+  className = 'w-14 h-14',
+}) => (
+  <div className={`relative flex items-center justify-center shrink-0 ${className}`}>
+    <svg viewBox="0 0 64 64" fill="none" className="w-full h-full drop-shadow-sm" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="30" fill="#8B1E22" stroke="#661014" strokeWidth="1" />
+      <circle cx="32" cy="32" r="26" stroke="#D6B274" strokeWidth="0.8" strokeDasharray="2 1.5" />
+      <circle cx="32" cy="32" r="23" stroke="#F5D08A" strokeWidth="0.5" strokeOpacity="0.4" />
+      {/* Laurel wreath garland */}
+      <path d="M15 32 C15 21 21 15 28 14" stroke="#F9E2A8" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M49 32 C49 21 43 15 36 14" stroke="#F9E2A8" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M15 32 C15 43 21 49 28 50" stroke="#F9E2A8" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M49 32 C49 43 43 49 36 50" stroke="#F9E2A8" strokeWidth="1.2" strokeLinecap="round" />
+      {/* Decorative leaf notches */}
+      <circle cx="21" cy="20" r="1.2" fill="#FDE68A" />
+      <circle cx="43" cy="20" r="1.2" fill="#FDE68A" />
+      <circle cx="21" cy="44" r="1.2" fill="#FDE68A" />
+      <circle cx="43" cy="44" r="1.2" fill="#FDE68A" />
+    </svg>
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none text-white leading-none">
+      <span className="text-[7.5px] font-sans font-bold tracking-[0.2em] text-[#FDE68A] uppercase">CLASS</span>
+      <span className="text-[6.5px] font-mono text-[#FDE68A]/80 tracking-widest my-0.5">— OF —</span>
+      <span className="text-[13px] font-serif font-black tracking-wider text-white">2026</span>
+    </div>
+  </div>
+);
+
 export const WaxSealEmblem: React.FC<{ className?: string; text?: string }> = ({
   className = 'w-16 h-16',
   text = '2026',
