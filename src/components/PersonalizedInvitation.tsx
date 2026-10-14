@@ -5,6 +5,7 @@ import { getGuestInvitationUrl } from '../config/guestUrl.ts';
 import { TdtuLogo } from './TdtuLogo.tsx';
 import { ClassOf2026Medallion, GraduationCapIcon } from './SunflowerCapMotif.tsx';
 import { GraduationHeroIllustration } from './GraduationHeroIllustration.tsx';
+import { LeftBotanicalOrnament, RightBotanicalOrnament } from './AcademicBotanicalOrnaments.tsx';
 import { Calendar, MapPin, Share2, Check, ExternalLink } from 'lucide-react';
 
 interface PersonalizedInvitationProps {
@@ -76,17 +77,27 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
         initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="card-academic-gold-border rounded-2xl shadow-xl overflow-hidden bg-[#FCFAF6]"
+        className="card-academic-gold-border rounded-2xl shadow-xl overflow-hidden bg-[#FCFAF6] relative"
       >
+        {/* Left Ambient Botanical Ornament (gentle breeze sway) */}
+        <div className="absolute top-24 sm:top-28 left-0 sm:left-1 lg:left-2 w-10 sm:w-16 lg:w-20 pointer-events-none z-0 opacity-40 sm:opacity-70 lg:opacity-85">
+          <LeftBotanicalOrnament className="w-full" />
+        </div>
+
+        {/* Right Ambient Botanical Ornament (gentle breeze sway) */}
+        <div className="absolute top-24 sm:top-28 right-0 sm:right-1 lg:right-2 w-10 sm:w-16 lg:w-20 pointer-events-none z-0 opacity-40 sm:opacity-70 lg:opacity-85">
+          <RightBotanicalOrnament className="w-full" />
+        </div>
+
         {/* Decorative Top Accent Bar: Reveal from left to right */}
         <motion.div
           initial={shouldReduceMotion ? false : { scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ duration: 0.65, delay: shouldReduceMotion ? 0 : 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="h-1.5 w-full bg-gradient-to-r from-[#15489D] via-[#D6B274] to-[#E44735] origin-left"
+          className="h-1.5 w-full bg-gradient-to-r from-[#15489D] via-[#D6B274] to-[#E44735] origin-left relative z-10"
         />
 
-        <div className="p-5 sm:p-9 lg:p-12">
+        <div className="p-5 sm:p-9 lg:p-12 relative z-10">
           {/* ========================================================= */}
           {/* 1. TOP CARD HEADER                                         */}
           {/* ========================================================= */}
