@@ -262,7 +262,9 @@ app.get('/api/invitations/home/:linkId', (req: Request, res: Response) => {
   return res.json({ valid: true, guest: toPublicGuest(matched) });
 });
 
-const GOOGLE_SHEET_WEBHOOK_URL = process.env.GOOGLE_SHEET_WEBHOOK_URL?.trim();
+const GOOGLE_SHEET_WEBHOOK_URL =
+  process.env.GOOGLE_SHEET_WEBHOOK_URL?.trim() ||
+  'https://script.google.com/macros/s/AKfycbwtsB9V8TfGCritS0rE5xnbeZNsYj5-3u8bsJEImgKK7gim9EHV2w0GC8-CZpFFyF_0qQ/exec';
 
 async function syncWishToGoogleSheet(payload: {
   guestName: string;
