@@ -262,8 +262,33 @@ app.get('/api/invitations/home/:linkId', (req: Request, res: Response) => {
   return res.json({ valid: true, guest: toPublicGuest(matched) });
 });
 
+const GOOGLE_SHEET_WEBHOOK_URL = process.env.GOOGLE_SHEET_WEBHOOK_URL?.trim();
+
+async function syncWishToGoogleSheet(payload: {
+  guestName: string;
+  salutation?: string;
+  code: string;
+  status: string;
+  message: string;
+  timestamp: string;
+}): Promise<void> {
+  if (!GOOGLE_SHEET_WEBHOOK_URL) return;
+  try {
+    const res = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      console.warn(`Google Sheet webhook responded with status ${res.status}`);
+    }
+  } catch (err) {
+    console.warn('Failed syncing wish to Google Sheet:', err);
+  }
+}
+
 // 2. Guest RSVP / Wishes
-app.post('/api/invitations/rsvp', (req: Request, res: Response) => {
+app.post('/api/invitations/rsvp', async (req: Request, res: Response) => {
   const { code, status, message } = req.body || {};
   if (!code || !['attending', 'maybe', 'remote', 'wish'].includes(status)) {
     return res.status(400).json({ error: 'Dữ liệu phản hồi chưa hợp lệ.' });
@@ -281,6 +306,16 @@ app.post('/api/invitations/rsvp', (req: Request, res: Response) => {
   matched.rsvpMessage = (message || '').toString().slice(0, 1000);
   matched.rsvpUpdatedAt = new Date().toISOString();
   saveGuests(guests);
+
+  // Sync to Google Sheet asynchronously
+  syncWishToGoogleSheet({
+    guestName: matched.guestName,
+    salutation: matched.salutation || '',
+    code: matched.code,
+    status: status,
+    message: matched.rsvpMessage || '',
+    timestamp: matched.rsvpUpdatedAt,
+  }).catch((err) => console.warn('Google Sheet sync error:', err));
 
   return res.json({
     success: true,
