@@ -382,5 +382,45 @@
     "createdAt": "2026-10-14T05:58:00.000Z",
     "openedCount": 2,
     "lastOpenedAt": "2026-10-14T06:01:34.513Z"
+  },
+  {
+    "id": "guest_0039",
+    "linkId": "H4KV",
+    "code": "CM-DANGKHOA",
+    "guestName": "Hoàng Tử Đăng Khoa",
+    "salutation": "Bạn",
+    "isActive": true,
+    "createdAt": "2026-10-14T10:27:38.302Z",
+    "openedCount": 0
+  },
+  {
+    "id": "guest_0040",
+    "linkId": "LESF",
+    "code": "CM-PHUONGNAM",
+    "guestName": "Phương Nam",
+    "salutation": "Bạn",
+    "isActive": true,
+    "createdAt": "2026-10-14T10:27:38.302Z",
+    "openedCount": 0
+  },
+  {
+    "id": "guest_0041",
+    "linkId": "587C",
+    "code": "CM-TRUNGVINH",
+    "guestName": "Hồ Trung Vĩnh",
+    "salutation": "Anh",
+    "isActive": true,
+    "createdAt": "2026-10-14T10:27:38.302Z",
+    "openedCount": 0
+  },
+  {
+    "id": "guest_0042",
+    "linkId": "TBFU",
+    "code": "CM-GIAKIET",
+    "guestName": "Gia Kiệt",
+    "salutation": "Bạn",
+    "isActive": true,
+    "createdAt": "2026-10-14T10:27:38.302Z",
+    "openedCount": 0
   }
 ]
