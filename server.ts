@@ -119,12 +119,19 @@ function generateGuestCode(): string {
 }
 
 function generateNextLinkId(guests: GuestRecord[]): string {
-  const highestId = guests.reduce((highest, guest) => {
-    const numericId = /^\d+$/.test(guest.linkId || '') ? Number(guest.linkId) : 0;
-    return Math.max(highest, numericId);
-  }, 0);
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let id = '';
+  let attempts = 0;
+  do {
+    const bytes = crypto.randomBytes(4);
+    id = '';
+    for (let i = 0; i < 4; i++) {
+      id += chars[bytes[i] % chars.length];
+    }
+    attempts++;
+  } while (guests.some((g) => g.linkId.toLowerCase() === id.toLowerCase()) && attempts < 50);
 
-  return String(highestId + 1).padStart(4, '0');
+  return id;
 }
 
 function toPublicGuest(guest: GuestRecord) {
@@ -222,11 +229,11 @@ app.post('/api/invitations/resolve', (req: Request, res: Response) => {
   });
 });
 
-// Resolve a personalized home URL such as /home/0001.
+// Resolve a personalized home URL such as /home/0001 or /home/9k2m.
 app.get('/api/invitations/home/:linkId', (req: Request, res: Response) => {
   const clientIp = req.headers['x-forwarded-for']?.toString() || req.socket.remoteAddress || 'unknown';
   const linkId = (req.params.linkId || '').trim();
-  if (!/^\d{4,12}$/.test(linkId)) {
+  if (!/^[a-zA-Z0-9]{4,12}$/.test(linkId)) {
     return res.status(404).json({
       valid: false,
       message: 'Liên kết thiệp mời chưa chính xác.',
@@ -234,7 +241,9 @@ app.get('/api/invitations/home/:linkId', (req: Request, res: Response) => {
   }
 
   const guests = loadGuests();
-  const matched = guests.find((guest) => guest.linkId === linkId && guest.isActive);
+  const matched = guests.find(
+    (guest) => guest.linkId.toLowerCase() === linkId.toLowerCase() && guest.isActive
+  );
 
   if (!matched) {
     if (!checkRateLimit(clientIp)) {

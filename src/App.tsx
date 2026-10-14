@@ -201,7 +201,7 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const codeParam = params.get('code');
-    const personalizedPath = window.location.pathname.match(/^\/home\/(\d{4,12})\/?$/i);
+    const personalizedPath = window.location.pathname.match(/^\/home\/([a-zA-Z0-9]{4,12})\/?$/i);
 
     if (!personalizedPath && !codeParam) return;
 
