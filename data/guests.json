@@ -432,5 +432,15 @@
     "isActive": true,
     "createdAt": "2026-10-14T10:30:12.768Z",
     "openedCount": 0
+  },
+  {
+    "id": "guest_0044",
+    "linkId": "UMMK",
+    "code": "CM-BAONHAN",
+    "guestName": "Châu Bảo Nhân",
+    "salutation": "Bạn",
+    "isActive": true,
+    "createdAt": "2026-10-14T10:35:09.356Z",
+    "openedCount": 0
   }
 ]
