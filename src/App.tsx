@@ -7,6 +7,7 @@ import { LocationSection } from './components/LocationSection.tsx';
 import { ClosingSection } from './components/ClosingSection.tsx';
 import { RsvpSection } from './components/RsvpSection.tsx';
 import { AdminPanel } from './components/AdminPanel.tsx';
+import { FloatingCallBubble } from './components/FloatingCallBubble.tsx';
 import { EVENT_CONFIG } from './config/event.ts';
 
 type CurrentGuest = {
@@ -298,6 +299,9 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* Floating Call Bubble for quick guest contact */}
+      <FloatingCallBubble />
 
       <footer className="border-t border-[#D6B274]/30 bg-[#FAF7F1] py-8 px-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">

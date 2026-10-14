@@ -1,10 +1,12 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { EVENT_CONFIG } from '../config/event.ts';
-import { MapPin, Navigation, Compass, Car, ExternalLink } from 'lucide-react';
+import { MapPin, Navigation, Compass, Car, Phone, ExternalLink } from 'lucide-react';
 
 export const LocationSection: React.FC = () => {
   const shouldReduceMotion = useReducedMotion();
+  const phone = EVENT_CONFIG.student.phoneNumber || '0818864844';
+  const displayPhone = EVENT_CONFIG.student.displayPhone || '0818 864 844';
 
   return (
     <motion.section
@@ -88,17 +90,29 @@ export const LocationSection: React.FC = () => {
               <h3 className="text-base font-serif font-bold text-[#15489D] mb-3">
                 Chỉ dẫn dành cho khách mời
               </h3>
-              <ul className="space-y-3 text-xs sm:text-sm text-slate-700">
+              <ul className="space-y-4 text-xs sm:text-sm text-slate-700">
                 <li className="flex items-start gap-2.5">
                   <Car className="w-4 h-4 text-[#D6B274] shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Khu vực gửi xe:</strong> Vào theo cổng chính 19 Nguyễn Hữu Thọ, hoặc cổng đường Lê Văn Lương (dành cho cả xe máy và ô tô).
-                  </span>
+                  <div>
+                    <span className="leading-relaxed">
+                      <strong className="text-[#17243A]">Khu vực gửi xe:</strong> Vào theo cổng 7, hoặc đậu xe đối diện cổng 3 của trường (không biết cứ alo cho Minh đi).
+                    </span>
+                    {/* Bong bóng số điện thoại trực tiếp */}
+                    <div className="mt-2.5">
+                      <a
+                        href={`tel:${phone}`}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#15489D] hover:bg-[#0E3574] text-white rounded-full text-xs font-semibold shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer border border-[#D6B274]/50 group"
+                      >
+                        <Phone className="w-3.5 h-3.5 text-[#F6DF99] group-hover:rotate-12 transition-transform animate-pulse" />
+                        <span>Alo cho Minh: {displayPhone}</span>
+                      </a>
+                    </div>
+                  </div>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-[#E44735] shrink-0 mt-0.5" />
                   <span>
-                    <strong>Khuôn viên trường:</strong> Vô gọi cho Minh.
+                    <strong className="text-[#17243A]">Khuôn viên trường:</strong> Nên đến trước 15–30 phút để chuẩn bị và chụp ảnh lưu niệm cùng tân cử nhân.
                   </span>
                 </li>
               </ul>

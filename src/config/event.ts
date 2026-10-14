@@ -8,6 +8,8 @@ export interface EventConfig {
     fullName: string;
     displayName: string;
     englishName: string;
+    phoneNumber?: string;
+    displayPhone?: string;
     faculty: string;
     facultyEnglish: string;
     major: string;
@@ -62,6 +64,8 @@ export const EVENT_CONFIG: EventConfig = {
     fullName: 'ĐẶNG CÔNG MINH',
     displayName: 'Đặng Công Minh',
     englishName: 'Dang Cong Minh',
+    phoneNumber: '0818864844',
+    displayPhone: '0818 864 844',
     faculty: 'Khoa Công nghệ thông tin',
     facultyEnglish: 'Faculty of Information Technology',
     major: 'Khoa học máy tính',
@@ -96,7 +100,7 @@ export const EVENT_CONFIG: EventConfig = {
     googleMapsUrl: 'https://maps.app.goo.gl/beoX2ALAzJoedg4Z7',
     googleMapsEmbedQuery: 'Trường Đại học Tôn Đức Thắng, 19 Nguyễn Hữu Thọ, Tân Hưng, Hồ Chí Minh',
     arrivalTips: [
-      'Gửi xe tại cổng 19 Nguyễn Hữu Thọ hoặc cổng Lê Văn Lương.',
+      'Khu vực gửi xe: Vào theo cổng 7, hoặc đậu xe đối diện cổng 3 của trường (không biết cứ alo cho Minh đi).',
       'Nên đến trước 15–30 phút để chuẩn bị và chụp ảnh lưu niệm cùng tân cử nhân.',
       'Trang phục lịch sự, trang nhã để có những bức ảnh kỷ niệm đẹp nhất.',
     ],
