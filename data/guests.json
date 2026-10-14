@@ -422,5 +422,15 @@
     "isActive": true,
     "createdAt": "2026-10-14T10:27:38.302Z",
     "openedCount": 0
+  },
+  {
+    "id": "guest_0043",
+    "linkId": "NEZS",
+    "code": "CM-DUYANH",
+    "guestName": "Duy Anh",
+    "salutation": "Anh",
+    "isActive": true,
+    "createdAt": "2026-10-14T10:30:12.768Z",
+    "openedCount": 0
   }
 ]
