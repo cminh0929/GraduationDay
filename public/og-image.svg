@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#15489D"/>
+      <stop offset="100%" stop-color="#0E234A"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D6B274"/>
+      <stop offset="100%" stop-color="#F3E5C8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Border -->
+  <rect x="40" y="40" width="1120" height="550" rx="16" fill="none" stroke="#D6B274" stroke-width="2" stroke-opacity="0.4"/>
+  <rect x="52" y="52" width="1096" height="526" rx="12" fill="none" stroke="#D6B274" stroke-width="1" stroke-opacity="0.2"/>
+
+  <!-- Header -->
+  <text x="600" y="140" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="20" fill="#D6B274" letter-spacing="6">TRƯỜNG ĐẠI HỌC TÔN ĐỨC THẮNG · GRADUATION 2026</text>
+  
+  <!-- Slogan -->
+  <text x="600" y="210" text-anchor="middle" font-family="monospace" font-size="22" fill="#93C5FD" letter-spacing="3">git commit -m "THE FINAL COMMIT"</text>
+  
+  <!-- Main Title -->
+  <text x="600" y="320" text-anchor="middle" font-family="serif" font-weight="700" font-size="64" fill="url(#gold)">THIỆP MỜI LỄ TỐT NGHIỆP</text>
+  
+  <!-- Student Name -->
+  <text x="600" y="400" text-anchor="middle" font-family="serif" font-weight="700" font-size="48" fill="#FFFFFF" letter-spacing="2">ĐẶNG CÔNG MINH</text>
+  <text x="600" y="445" text-anchor="middle" font-family="sans-serif" font-weight="500" font-size="22" fill="#E2E8F0">Khoa Công nghệ thông tin · Ngành Khoa học máy tính</text>
+
+  <!-- Event Details Footer -->
+  <text x="600" y="525" text-anchor="middle" font-family="sans-serif" font-weight="500" font-size="20" fill="#D6B274">Thứ Bảy · 17.10.2026 · 09:00 AM · 19 Nguyễn Hữu Thọ, Q.7, TP.HCM</text>
+</svg>

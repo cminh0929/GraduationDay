@@ -1,0 +1,64 @@
+[
+  {
+    "id": "guest_001",
+    "linkId": "0001",
+    "code": "CM-7K4M9P",
+    "guestName": "Nguyễn Văn A",
+    "salutation": "Bạn",
+    "isActive": true,
+    "createdAt": "2026-10-10T08:00:00.000Z",
+    "openedCount": 3,
+    "lastOpenedAt": "2026-10-14T02:59:36.396Z"
+  },
+  {
+    "id": "guest_002",
+    "linkId": "0002",
+    "code": "CM-8R2T6X",
+    "guestName": "Trần Thị B",
+    "salutation": "Chị",
+    "isActive": true,
+    "createdAt": "2026-10-10T08:15:00.000Z",
+    "openedCount": 1,
+    "lastOpenedAt": "2026-10-14T01:58:14.092Z"
+  },
+  {
+    "id": "guest_003",
+    "linkId": "0003",
+    "code": "CM-5Q9W3N",
+    "guestName": "Lê Văn C",
+    "salutation": "Anh",
+    "isActive": true,
+    "createdAt": "2026-10-10T08:30:00.000Z",
+    "openedCount": 0
+  },
+  {
+    "id": "guest_004",
+    "linkId": "0004",
+    "code": "CM-GIADINH",
+    "guestName": "Gia đình yêu thương",
+    "salutation": "Gia đình",
+    "isActive": true,
+    "createdAt": "2026-10-10T09:00:00.000Z",
+    "openedCount": 0
+  },
+  {
+    "id": "guest_005",
+    "linkId": "0005",
+    "code": "CM-THAYCO",
+    "guestName": "Quý Thầy Cô",
+    "salutation": "Kính gửi",
+    "isActive": true,
+    "createdAt": "2026-10-10T09:30:00.000Z",
+    "openedCount": 0
+  },
+  {
+    "id": "guest_006",
+    "linkId": "0006",
+    "code": "CM-BANTHAN",
+    "guestName": "Hội Bạn Thân IT",
+    "salutation": "Các bạn",
+    "isActive": true,
+    "createdAt": "2026-10-10T10:00:00.000Z",
+    "openedCount": 0
+  }
+]
