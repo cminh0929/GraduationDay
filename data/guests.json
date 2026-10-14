@@ -371,5 +371,16 @@
     "createdAt": "2026-10-14T05:57:19.998Z",
     "openedCount": 1,
     "lastOpenedAt": "2026-10-14T05:57:40.315Z"
+  },
+  {
+    "id": "guest_0038",
+    "linkId": "0038",
+    "code": "CM-DUYKHANH",
+    "guestName": "Phạm Duy Khanh",
+    "salutation": "Bạn",
+    "isActive": true,
+    "createdAt": "2026-10-14T05:58:00.000Z",
+    "openedCount": 1,
+    "lastOpenedAt": "2026-10-14T05:59:08.727Z"
   }
 ]
