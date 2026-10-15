@@ -219,7 +219,7 @@ export const WishSection: React.FC<WishSectionProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label htmlFor="wish-nickname" className="block text-xs font-semibold text-slate-700">
-                    Tên gọi / Nickname <span className="text-slate-400 font-normal">(tùy chọn)</span>
+                    Tên gọi / Nickname
                   </label>
                   <span className="text-[10px] font-mono text-slate-400 tabular-nums">
                     {nickname.length}/{MAX_NICKNAME_LENGTH}
@@ -247,7 +247,7 @@ export const WishSection: React.FC<WishSectionProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="wish-message" className="block text-xs font-semibold text-slate-700">
-                  Lời chúc của bạn <span className="text-slate-400 font-normal">(tùy chọn)</span>
+                  Lời chúc của bạn
                 </label>
                 <span className="text-[10px] font-mono text-slate-400 tabular-nums">
                   {message.length}/{MAX_WISH_LENGTH}
