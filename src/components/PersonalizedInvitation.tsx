@@ -12,13 +12,15 @@ interface PersonalizedInvitationProps {
   guestName: string;
   salutation?: string;
   guestCode?: string;
-  linkId: string;
+  linkId?: string;
+  isGeneral?: boolean;
 }
 
 export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
   guestName,
   salutation = 'Bạn',
   linkId,
+  isGeneral = false,
 }) => {
   const shouldReduceMotion = useReducedMotion();
 
@@ -27,8 +29,11 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
     const title = encodeURIComponent(
       `Lễ tốt nghiệp 2026 — Đặng Công Minh (Khoa học máy tính, TDTU)`
     );
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const details = encodeURIComponent(
-      `Lễ trao bằng tốt nghiệp cử nhân của Đặng Công Minh tại Trường Đại học Tôn Đức Thắng.\nKhách mời: ${guestName}\nThiệp mời trực tuyến: ${getGuestInvitationUrl(linkId)}`
+      isGeneral
+        ? `Lễ trao bằng tốt nghiệp cử nhân của Đặng Công Minh tại Trường Đại học Tôn Đức Thắng.\nThiệp mời trực tuyến: ${origin}`
+        : `Lễ trao bằng tốt nghiệp cử nhân của Đặng Công Minh tại Trường Đại học Tôn Đức Thắng.\nKhách mời: ${guestName}\nThiệp mời trực tuyến: ${getGuestInvitationUrl(linkId || '')}`
     );
     const location = encodeURIComponent(
       `${EVENT_CONFIG.location.venueName}, ${EVENT_CONFIG.location.address}`
@@ -39,6 +44,9 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
 
   // Helper to split multi-person names (e.g. Cha & Me) to match mockup typography hierarchy
   const renderFormattedGuestName = (name: string) => {
+    if (isGeneral) {
+      return <span className="block text-[#15305B]">{name}</span>;
+    }
     if (name.includes('&')) {
       const parts = name.split('&').map((p) => p.trim());
       return (
@@ -142,9 +150,11 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
                 </div>
 
                 {/* Salutation */}
-                <p className="text-sm sm:text-base font-serif italic text-slate-600 mb-1">
-                  {salutation && salutation !== 'Bạn' ? `Kính gửi ${salutation}` : 'Thân gửi bạn'}
-                </p>
+                {!isGeneral && (
+                  <p className="text-sm sm:text-base font-serif italic text-slate-600 mb-1">
+                    {salutation && salutation !== 'Bạn' ? `Kính gửi ${salutation}` : 'Thân gửi bạn'}
+                  </p>
+                )}
 
                 {/* Primary Guest Name: Serif, large, authoritative */}
                 <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-black tracking-tight leading-[1.18] text-balance">

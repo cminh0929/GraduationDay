@@ -8,6 +8,7 @@ import { ClosingSection } from './components/ClosingSection.tsx';
 import { RsvpSection } from './components/RsvpSection.tsx';
 import { AdminPanel } from './components/AdminPanel.tsx';
 import { FloatingCallBubble } from './components/FloatingCallBubble.tsx';
+import { PublicInvitationAccess } from './components/PublicInvitationAccess.tsx';
 import { EVENT_CONFIG } from './config/event.ts';
 
 type CurrentGuest = {
@@ -260,21 +261,21 @@ export default function App() {
                 linkId={currentGuest.linkId}
               />
             ) : (
-              <div className="py-8 px-4 text-center max-w-4xl mx-auto">
-                {linkError && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-[#B42318]">
-                    {linkError} Bạn vẫn có thể xem thông tin chung của buổi lễ.
-                  </div>
-                )}
-                <div className="p-5 bg-white border border-[#D6B274]/40 rounded-xl shadow-2xs text-left">
-                  <p className="text-xs font-mono uppercase text-[#15489D]">
-                    THIỆP MỜI LỄ TỐT NGHIỆP 2026 · ĐẶNG CÔNG MINH
-                  </p>
-                  <p className="text-sm text-slate-700 mt-1">
-                    Chào mừng bạn đến với trang thông tin lễ tốt nghiệp. Thiệp cá nhân hóa được mở trực tiếp từ liên kết riêng đã gửi đến từng khách mời.
-                  </p>
-                </div>
-              </div>
+              <>
+                <PublicInvitationAccess
+                  initialError={linkError}
+                  onDismissError={() => setLinkError('')}
+                  onResolveSuccess={(guest) => {
+                    setLinkError('');
+                    setCurrentGuest(guest);
+                    fireGrandCelebration();
+                  }}
+                />
+                <PersonalizedInvitation
+                  guestName="Bạn bè và những người thân quý"
+                  isGeneral
+                />
+              </>
             )}
 
             <Countdown />
