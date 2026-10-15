@@ -6,7 +6,6 @@ import { TdtuLogo } from './TdtuLogo.tsx';
 import { ClassOf2026Medallion, GraduationCapIcon } from './SunflowerCapMotif.tsx';
 import { GraduationHeroIllustration } from './GraduationHeroIllustration.tsx';
 import { LeftBotanicalOrnament, RightBotanicalOrnament } from './AcademicBotanicalOrnaments.tsx';
-import { HandwrittenText } from './HandwrittenText.tsx';
 import { Calendar, MapPin, ExternalLink } from 'lucide-react';
 
 interface PersonalizedInvitationProps {
@@ -42,18 +41,11 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=20261017T020000Z/20261017T050000Z&details=${details}&location=${location}`;
   })();
 
-  /**
-   * Determine whether to animate the guest name with HandwrittenText.
-   * Two-person names (containing " & " or " và " after trimming) are split
-   * into two lines and rendered statically — animating split halves separately
-   * would require two staggered components and is out of scope.
-   */
   const isSplitName =
     !isGeneral && (guestName.includes('&') || guestName.includes(' và '));
 
   const renderGuestName = () => {
     if (isSplitName) {
-      // Two-person name: static two-line rendering, no animation
       const [part1, part2] = guestName.includes('&')
         ? guestName.split('&').map((p) => p.trim())
         : guestName.split(' và ').map((p) => p.trim());
@@ -65,20 +57,10 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
       );
     }
 
-    // Single / general name — handwritten stroke reveal
-    // startDelay: after "TRÂN TRỌNG KÍNH MỜI" finishes (~1.0s from card mount)
     return (
-      <HandwrittenText
-        text={guestName}
-        as="h2"
-        className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-black tracking-tight leading-[1.18] text-[#15305B] text-balance"
-        strokeColor="#15305B"
-        strokeWidth={0.6}
-        startDelay={1.0}
-        wordDuration={0.42}
-        wordStagger={0.14}
-        shouldReduceMotion={shouldReduceMotion}
-      />
+      <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-serif font-black tracking-tight leading-[1.18] text-[#15305B] text-balance">
+        {guestName}
+      </h2>
     );
   };
 
@@ -189,33 +171,20 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
                      * startDelay 0.35s — after card fade-in finishes.
                      * 4 words × (0.38s + 0.09s stagger) ≈ 0.73s → ends ~1.08s
                      */}
-                    <HandwrittenText
-                      text="TRÂN TRỌNG KÍNH MỜI"
-                      as="span"
-                      className="text-[11px] sm:text-xs font-semibold tracking-[0.22em] uppercase text-[#947229]"
-                      strokeColor="#947229"
-                      strokeWidth={0.4}
-                      startDelay={0.35}
-                      wordDuration={0.38}
-                      wordStagger={0.09}
-                      shouldReduceMotion={shouldReduceMotion}
-                    />
+                    <span className="text-[11px] sm:text-xs font-semibold tracking-[0.22em] uppercase text-[#947229]">
+                      TRÂN TRỌNG KÍNH MỜI
+                    </span>
                     <span className="h-px w-6 sm:w-8 bg-[#D6B274]" />
                   </div>
 
-                  {/* Salutation — soft motion fade-in, after eyebrow finishes */}
+                  {/* Salutation */}
                   {!isGeneral && (
-                    <motion.p
-                      initial={shouldReduceMotion ? false : { opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: shouldReduceMotion ? 0 : 1.15, ease: 'easeOut' }}
-                      className="text-sm sm:text-base font-serif italic text-slate-600 mb-1"
-                    >
+                    <p className="text-sm sm:text-base font-serif italic text-slate-600 mb-1">
                       {salutation && salutation !== 'Bạn' ? `Kính gửi ${salutation}` : 'Thân gửi bạn'}
-                    </motion.p>
+                    </p>
                   )}
 
-                  {/* Primary Guest Name — written by pen after eyebrow */}
+                  {/* Primary Guest Name */}
                   {renderGuestName()}
 
                   {/* Subtle Gold Divider */}
@@ -226,7 +195,7 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
                 <motion.div
                   initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.7, ease: 'easeOut' }}
+                  transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.4, ease: 'easeOut' }}
                   className="bg-[#FAF5ED] border-l-[3.5px] border-[#D6B274] rounded-r-lg p-4 sm:p-5 shadow-2xs"
                 >
                   <p className="text-sm sm:text-[15px] font-serif italic text-slate-700 leading-relaxed">
@@ -260,22 +229,9 @@ export const PersonalizedInvitation: React.FC<PersonalizedInvitationProps> = ({
                 <span className="text-[10px] sm:text-[11px] font-mono tracking-widest text-slate-400 uppercase block">
                   TÂN CỬ NHÂN
                 </span>
-                {/*
-                 * "Đặng Công Minh": animates in parallel with the cap fly-in
-                 * (different section of the card, no visual conflict).
-                 * startDelay 0.5s, 3 words → ends at ~1.08s
-                 */}
-                <HandwrittenText
-                  text={EVENT_CONFIG.student.fullName}
-                  as="h3"
-                  className="text-lg sm:text-xl font-serif font-bold text-[#15305B] tracking-tight"
-                  strokeColor="#15305B"
-                  strokeWidth={0.5}
-                  startDelay={0.5}
-                  wordDuration={0.40}
-                  wordStagger={0.12}
-                  shouldReduceMotion={shouldReduceMotion}
-                />
+                <h3 className="text-lg sm:text-xl font-serif font-bold text-[#15305B] tracking-tight">
+                  {EVENT_CONFIG.student.fullName}
+                </h3>
                 <div className="text-xs text-slate-600 space-y-0.5 pt-0.5">
                   <p>{EVENT_CONFIG.student.faculty}</p>
                   <p>Ngành {EVENT_CONFIG.student.major}</p>

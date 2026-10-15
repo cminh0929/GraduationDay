@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles } from 'lucide-react';
 import { EVENT_CONFIG } from '../config/event.ts';
-import { isSoundMuted, toggleSound, subscribeSoundState } from '../utils/fireworkSound.ts';
+import { isSoundMuted, toggleSound, subscribeSoundState, unlockAudio } from '../utils/fireworkSound.ts';
 
-export const HeaderNav: React.FC = () => {
+interface HeaderNavProps {
+  onReplayCelebration?: () => void;
+}
+
+export const HeaderNav: React.FC<HeaderNavProps> = ({ onReplayCelebration }) => {
   const [muted, setMuted] = useState(isSoundMuted());
 
   useEffect(() => {
@@ -21,8 +25,8 @@ export const HeaderNav: React.FC = () => {
           {EVENT_CONFIG.student.displayName} · 2026
         </a>
 
-        {/* Zone 2: Navigation & Sound Toggle */}
-        <div className="flex items-center gap-3 sm:gap-7">
+        {/* Zone 2: Navigation & Action Controls */}
+        <div className="flex items-center gap-2.5 sm:gap-6">
           <nav className="hidden md:flex items-center gap-7 text-xs sm:text-sm font-medium text-slate-700">
             <a
               href="#invitation"
@@ -50,6 +54,22 @@ export const HeaderNav: React.FC = () => {
             </a>
           </nav>
 
+          {/* Replay Firework Celebration Button */}
+          {onReplayCelebration && (
+            <button
+              type="button"
+              onClick={() => {
+                unlockAudio();
+                onReplayCelebration();
+              }}
+              title="Bắn pháo hoa ăn mừng"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-semibold bg-[#15489D] hover:bg-[#0E3574] text-white transition-all shadow-xs hover:shadow-md cursor-pointer select-none active:scale-95"
+            >
+              <span>🎆</span>
+              <span className="text-[11px] font-medium">Bắn pháo hoa</span>
+            </button>
+          )}
+
           {/* Sound Toggle Button */}
           <button
             type="button"
@@ -65,15 +85,15 @@ export const HeaderNav: React.FC = () => {
             {muted ? (
               <>
                 <VolumeX className="w-3.5 h-3.5 text-slate-400" />
-                <span className="hidden sm:inline text-[11px]">Âm thanh: Tắt</span>
+                <span className="hidden sm:inline text-[11px]">Tắt tiếng</span>
               </>
             ) : (
               <>
                 <Volume2 className="w-3.5 h-3.5 text-[#15489D] animate-pulse" />
                 <span className="hidden sm:inline text-[11px] font-semibold text-[#15489D]">
-                  Âm thanh: Bật
+                  Bật tiếng
                 </span>
-                <span className="sm:hidden text-[11px] font-semibold text-[#15489D]">Âm thanh</span>
+                <span className="sm:hidden text-[11px] font-semibold text-[#15489D]">Bật</span>
               </>
             )}
           </button>

@@ -1,8 +1,9 @@
 /**
  * fireworkSound.ts
- * Synthesizes realistic, pleasant firework celebratory sound effects using native Web Audio API.
+ * Synthesizes realistic, punchy, celebratory firework sound effects using native Web Audio API.
+ * - Engineered for loud, crisp audibility on phone speakers, laptops, and desktop headphones
+ * - Handles browser autoplay restrictions with automatic queued celebration upon first interaction
  * - Zero external assets or network dependencies
- * - Sub-bass punch + filtered noise burst + sparkling crackles
  * - Stereo panning & dynamic randomization
  * - Mute control with localStorage persistence
  * - Respects prefers-reduced-motion
@@ -18,7 +19,6 @@ const STORAGE_KEY = 'graduation_sound_muted';
 type SoundStateListener = (muted: boolean) => void;
 const listeners = new Set<SoundStateListener>();
 
-/** Check initial muted state from localStorage (defaults to false) */
 function getInitialMuted(): boolean {
   if (typeof window === 'undefined') return false;
   try {
@@ -29,6 +29,8 @@ function getInitialMuted(): boolean {
 }
 
 let isMutedState = getInitialMuted();
+let pendingCelebration = false;
+let unlockListenersAttached = false;
 
 export function isSoundMuted(): boolean {
   return isMutedState;
@@ -47,7 +49,7 @@ export function setSoundMuted(muted: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY, muted ? 'true' : 'false');
   } catch {
-    // Ignore localStorage error in private mode
+    // Ignore in private browsing
   }
   listeners.forEach((fn) => fn(muted));
 }
@@ -56,14 +58,14 @@ export function toggleSound(): boolean {
   const next = !isMutedState;
   setSoundMuted(next);
   if (!next) {
-    // Unlock and play a cheerful preview pop
     unlockAudio();
-    playBurst({ pan: 0, pitch: 1.1, intensity: 0.7, withCrackles: true });
+    setTimeout(() => {
+      playBurst({ pan: 0, pitch: 1.05, intensity: 1.2, withCrackles: true });
+    }, 50);
   }
   return next;
 }
 
-/** Check if reduced motion is requested */
 function isReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   try {
@@ -73,7 +75,7 @@ function isReducedMotion(): boolean {
   }
 }
 
-/** Lazily initialize AudioContext and master nodes */
+/** Lazily initialize AudioContext with loud, clear master gain & compressor */
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
 
@@ -85,16 +87,16 @@ function getAudioContext(): AudioContext | null {
 
     audioCtx = new AudioCtxClass();
 
-    // Studio-grade dynamic compressor to prevent distortion
     compressor = audioCtx.createDynamicsCompressor();
-    compressor.threshold.setValueAtTime(-14, audioCtx.currentTime);
-    compressor.knee.setValueAtTime(30, audioCtx.currentTime);
-    compressor.ratio.setValueAtTime(8, audioCtx.currentTime);
+    compressor.threshold.setValueAtTime(-12, audioCtx.currentTime);
+    compressor.knee.setValueAtTime(24, audioCtx.currentTime);
+    compressor.ratio.setValueAtTime(6, audioCtx.currentTime);
     compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
-    compressor.release.setValueAtTime(0.2, audioCtx.currentTime);
+    compressor.release.setValueAtTime(0.15, audioCtx.currentTime);
 
     masterGain = audioCtx.createGain();
-    masterGain.gain.setValueAtTime(0.38, audioCtx.currentTime);
+    // High master volume for crisp audibility on phone and laptop speakers
+    masterGain.gain.setValueAtTime(0.85, audioCtx.currentTime);
 
     masterGain.connect(compressor);
     compressor.connect(audioCtx.destination);
@@ -103,7 +105,7 @@ function getAudioContext(): AudioContext | null {
   return audioCtx;
 }
 
-/** Create and cache 1 second of white noise for explosions & crackles */
+/** 1 second of white noise for explosions & crackles */
 function getNoiseBuffer(ctx: AudioContext): AudioBuffer {
   if (noiseBuffer && noiseBuffer.sampleRate === ctx.sampleRate) {
     return noiseBuffer;
@@ -119,7 +121,36 @@ function getNoiseBuffer(ctx: AudioContext): AudioBuffer {
 }
 
 /**
- * Unlock AudioContext on user interaction
+ * Automatically attaches listeners to unlock audio on the very first touch/click/scroll
+ * and immediately triggers any queued celebration sound.
+ */
+export function setupAutoUnlock(): void {
+  if (typeof window === 'undefined' || unlockListenersAttached) return;
+  unlockListenersAttached = true;
+
+  const handleInteraction = () => {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().then(() => {
+        if (pendingCelebration && !isMutedState && !isReducedMotion()) {
+          pendingCelebration = false;
+          playGrandFireworkSequence();
+        }
+      }).catch(() => {});
+    } else if (pendingCelebration && !isMutedState && !isReducedMotion()) {
+      pendingCelebration = false;
+      playGrandFireworkSequence();
+    }
+  };
+
+  const events = ['pointerdown', 'touchstart', 'click', 'keydown', 'scroll'];
+  events.forEach((evt) => {
+    window.addEventListener(evt, handleInteraction, { once: true, passive: true });
+  });
+}
+
+/**
+ * Force unlock AudioContext on user action
  */
 export function unlockAudio(): void {
   const ctx = getAudioContext();
@@ -128,7 +159,6 @@ export function unlockAudio(): void {
   }
 }
 
-/** Helper to route audio through optional stereo panner */
 function connectPanner(ctx: AudioContext, sourceNode: AudioNode, pan = 0): AudioNode {
   if (!masterGain) return sourceNode;
   if (typeof ctx.createStereoPanner === 'function' && pan !== 0) {
@@ -155,26 +185,23 @@ export function playLaunch(pan = 0, pitchMultiplier = 1): void {
   const gain = ctx.createGain();
 
   osc.type = 'triangle';
-  const startFreq = 220 * pitchMultiplier;
-  const endFreq = 650 * pitchMultiplier;
+  const startFreq = 280 * pitchMultiplier;
+  const endFreq = 950 * pitchMultiplier;
 
   osc.frequency.setValueAtTime(startFreq, now);
   osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.28);
 
-  gain.gain.setValueAtTime(0.001, now);
-  gain.gain.linearRampToValueAtTime(0.12, now + 0.05);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+  gain.gain.setValueAtTime(0.01, now);
+  gain.gain.linearRampToValueAtTime(0.35, now + 0.08);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
   osc.connect(gain);
   connectPanner(ctx, gain, pan);
 
   osc.start(now);
-  osc.stop(now + 0.3);
+  osc.stop(now + 0.32);
 }
 
-/**
- * Play firework burst (boom + noise impact + crackles)
- */
 export interface BurstOptions {
   pan?: number;
   pitch?: number;
@@ -182,6 +209,12 @@ export interface BurstOptions {
   withCrackles?: boolean;
 }
 
+/**
+ * Play loud, punchy firework burst:
+ * 1. Rich harmonic punch (audible on phones)
+ * 2. High-energy noise explosion
+ * 3. Sizzling celebratory crackles
+ */
 export function playBurst(options: BurstOptions = {}): void {
   if (isMutedState || isReducedMotion()) return;
   const ctx = getAudioContext();
@@ -191,67 +224,90 @@ export function playBurst(options: BurstOptions = {}): void {
   const now = ctx.currentTime;
   const noise = getNoiseBuffer(ctx);
 
-  // 1. Low-end punch (body thud)
+  // 1. Transient click / initial contact (punchy start)
+  const transientSource = ctx.createBufferSource();
+  transientSource.buffer = noise;
+  const transientFilter = ctx.createBiquadFilter();
+  transientFilter.type = 'bandpass';
+  transientFilter.frequency.setValueAtTime(1400 * pitch, now);
+  transientFilter.Q.setValueAtTime(1.2, now);
+  const transientGain = ctx.createGain();
+  transientGain.gain.setValueAtTime(0.7 * intensity, now);
+  transientGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+  transientSource.connect(transientFilter);
+  transientFilter.connect(transientGain);
+  connectPanner(ctx, transientGain, pan);
+  transientSource.start(now);
+  transientSource.stop(now + 0.05);
+
+  // 2. Harmonic Body Thump (Sawtooth filtered to 400Hz -> 80Hz for phone speaker harmonics)
   const subOsc = ctx.createOscillator();
+  const subFilter = ctx.createBiquadFilter();
   const subGain = ctx.createGain();
-  subOsc.type = 'sine';
-  subOsc.frequency.setValueAtTime(130 * pitch, now);
-  subOsc.frequency.exponentialRampToValueAtTime(38 * pitch, now + 0.16);
 
-  subGain.gain.setValueAtTime(0.32 * intensity, now);
-  subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+  subOsc.type = 'sawtooth';
+  subOsc.frequency.setValueAtTime(180 * pitch, now);
+  subOsc.frequency.exponentialRampToValueAtTime(50 * pitch, now + 0.22);
 
-  subOsc.connect(subGain);
+  subFilter.type = 'lowpass';
+  subFilter.frequency.setValueAtTime(450 * pitch, now);
+  subFilter.frequency.exponentialRampToValueAtTime(90 * pitch, now + 0.22);
+
+  subGain.gain.setValueAtTime(0.55 * intensity, now);
+  subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+  subOsc.connect(subFilter);
+  subFilter.connect(subGain);
   connectPanner(ctx, subGain, pan);
   subOsc.start(now);
-  subOsc.stop(now + 0.24);
+  subOsc.stop(now + 0.3);
 
-  // 2. Mid/High noise explosion burst
+  // 3. Wide Noise Blast
   const noiseSource = ctx.createBufferSource();
   noiseSource.buffer = noise;
 
   const filter = ctx.createBiquadFilter();
   filter.type = 'bandpass';
-  filter.frequency.setValueAtTime(1100 * pitch, now);
-  filter.Q.setValueAtTime(1.6, now);
+  filter.frequency.setValueAtTime(1250 * pitch, now);
+  filter.Q.setValueAtTime(1.3, now);
 
   const noiseGain = ctx.createGain();
-  noiseGain.gain.setValueAtTime(0.26 * intensity, now);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+  noiseGain.gain.setValueAtTime(0.65 * intensity, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
 
   noiseSource.connect(filter);
   filter.connect(noiseGain);
   connectPanner(ctx, noiseGain, pan);
 
   noiseSource.start(now);
-  noiseSource.stop(now + 0.35);
+  noiseSource.stop(now + 0.42);
 
-  // 3. Celebratory sizzling crackles (4-8 micro-pops)
+  // 4. Celebratory sizzling crackles (6-10 distinct micro-pops)
   if (withCrackles) {
-    const crackleCount = Math.floor(4 + Math.random() * 5);
+    const crackleCount = Math.floor(6 + Math.random() * 5);
     for (let i = 0; i < crackleCount; i++) {
-      const crackleDelay = 0.08 + Math.random() * 0.38;
+      const crackleDelay = 0.07 + Math.random() * 0.45;
       const crackleTime = now + crackleDelay;
-      const cracklePan = pan + (Math.random() - 0.5) * 0.35;
+      const cracklePan = pan + (Math.random() - 0.5) * 0.4;
 
       const cSource = ctx.createBufferSource();
       cSource.buffer = noise;
 
       const cFilter = ctx.createBiquadFilter();
       cFilter.type = 'highpass';
-      cFilter.frequency.setValueAtTime(2600 + Math.random() * 1800, crackleTime);
+      cFilter.frequency.setValueAtTime(2400 + Math.random() * 2200, crackleTime);
 
       const cGain = ctx.createGain();
-      const cVol = (0.06 + Math.random() * 0.09) * intensity;
+      const cVol = (0.15 + Math.random() * 0.18) * intensity;
       cGain.gain.setValueAtTime(cVol, crackleTime);
-      cGain.gain.exponentialRampToValueAtTime(0.001, crackleTime + 0.035);
+      cGain.gain.exponentialRampToValueAtTime(0.001, crackleTime + 0.04);
 
       cSource.connect(cFilter);
       cFilter.connect(cGain);
       connectPanner(ctx, cGain, cracklePan);
 
       cSource.start(crackleTime);
-      cSource.stop(crackleTime + 0.04);
+      cSource.stop(crackleTime + 0.05);
     }
   }
 }
@@ -266,10 +322,10 @@ export function playSparkleShower(pan = 0): void {
 
   const now = ctx.currentTime;
   const noise = getNoiseBuffer(ctx);
-  const count = 6;
+  const count = 7;
 
   for (let i = 0; i < count; i++) {
-    const delay = i * 0.06 + Math.random() * 0.04;
+    const delay = i * 0.05 + Math.random() * 0.04;
     const time = now + delay;
 
     const source = ctx.createBufferSource();
@@ -277,59 +333,62 @@ export function playSparkleShower(pan = 0): void {
 
     const filter = ctx.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(3200 + Math.random() * 1200, time);
-    filter.Q.setValueAtTime(3, time);
+    filter.frequency.setValueAtTime(3000 + Math.random() * 1500, time);
+    filter.Q.setValueAtTime(2.5, time);
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.08, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+    gain.gain.setValueAtTime(0.18, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
 
     source.connect(filter);
     filter.connect(gain);
-    connectPanner(ctx, gain, pan + (Math.random() - 0.5) * 0.2);
+    connectPanner(ctx, gain, pan + (Math.random() - 0.5) * 0.25);
 
     source.start(time);
-    source.stop(time + 0.06);
+    source.stop(time + 0.07);
   }
 }
 
-/**
- * Play soft firework (for closing section or wish submit)
- */
 export function playSoftFirework(pan = 0): void {
   playBurst({
     pan,
     pitch: 1.15,
-    intensity: 0.65,
+    intensity: 0.8,
     withCrackles: true,
   });
 }
 
 /**
- * Play synchronized firework audio sequence matching fireGrandCelebration in App.tsx
+ * Play full synchronized firework audio sequence.
+ * If audio context is suspended, queues the celebration and sets up auto-unlock!
  */
 export function playGrandFireworkSequence(): void {
   if (isMutedState || isReducedMotion()) return;
-  unlockAudio();
+
+  const ctx = getAudioContext();
+  if (!ctx || ctx.state === 'suspended') {
+    pendingCelebration = true;
+    setupAutoUnlock();
+    return;
+  }
 
   // Stage 1 (0ms): Dual corner launch & burst
   playLaunch(-0.4, 0.95);
   playLaunch(0.4, 1.05);
   setTimeout(() => {
-    playBurst({ pan: -0.4, pitch: 1.0, intensity: 0.85, withCrackles: true });
-    playBurst({ pan: 0.4, pitch: 1.05, intensity: 0.85, withCrackles: true });
+    playBurst({ pan: -0.4, pitch: 1.0, intensity: 1.1, withCrackles: true });
+    playBurst({ pan: 0.4, pitch: 1.05, intensity: 1.1, withCrackles: true });
   }, 160);
 
   // Stage 2 (280ms): Fast star-shaped bursts
   setTimeout(() => {
-    playBurst({ pan: -0.25, pitch: 1.25, intensity: 0.75, withCrackles: true });
-    playBurst({ pan: 0.25, pitch: 1.3, intensity: 0.75, withCrackles: true });
+    playBurst({ pan: -0.25, pitch: 1.25, intensity: 0.95, withCrackles: true });
+    playBurst({ pan: 0.25, pitch: 1.3, intensity: 0.95, withCrackles: true });
   }, 280);
 
   // Stage 3 (700ms): Central Grand Explosion
   setTimeout(() => {
-    playBurst({ pan: 0, pitch: 0.88, intensity: 1.2, withCrackles: true });
-    // Additional crackles shower 150ms after grand explosion
+    playBurst({ pan: 0, pitch: 0.9, intensity: 1.4, withCrackles: true });
     setTimeout(() => {
       playSparkleShower(0);
     }, 140);

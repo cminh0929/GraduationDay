@@ -10,7 +10,7 @@ import { AdminPanel } from './components/AdminPanel.tsx';
 import { FloatingCallBubble } from './components/FloatingCallBubble.tsx';
 import { PublicInvitationAccess } from './components/PublicInvitationAccess.tsx';
 import { EVENT_CONFIG } from './config/event.ts';
-import { playGrandFireworkSequence, unlockAudio } from './utils/fireworkSound.ts';
+import { playGrandFireworkSequence, unlockAudio, setupAutoUnlock } from './utils/fireworkSound.ts';
 
 type CurrentGuest = {
   id: string;
@@ -40,17 +40,9 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Unlock audio context on user's first touch/click
+  // Setup auto-unlock on user's first touch/click/scroll
   useEffect(() => {
-    const handleFirstInteraction = () => {
-      unlockAudio();
-    };
-    window.addEventListener('pointerdown', handleFirstInteraction, { once: true });
-    window.addEventListener('keydown', handleFirstInteraction, { once: true });
-    return () => {
-      window.removeEventListener('pointerdown', handleFirstInteraction);
-      window.removeEventListener('keydown', handleFirstInteraction);
-    };
+    setupAutoUnlock();
   }, []);
 
   // Grand Graduation Fireworks Celebration
@@ -259,9 +251,14 @@ export default function App() {
     };
   }, []);
 
+  const handleReplayCelebration = () => {
+    hasCelebratedRef.current = false;
+    fireGrandCelebration();
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F5EF] text-[#17243A] selection:bg-[#15489D]/20 selection:text-[#15489D]">
-      <HeaderNav />
+      <HeaderNav onReplayCelebration={handleReplayCelebration} />
 
       <main className="flex-1 pb-16">
         {isResolvingLink ? (
