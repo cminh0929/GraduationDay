@@ -101,7 +101,7 @@ export const EVENT_CONFIG: EventConfig = {
     googleMapsEmbedQuery: 'Trường Đại học Tôn Đức Thắng, 19 Nguyễn Hữu Thọ, Tân Hưng, Hồ Chí Minh',
     arrivalTips: [
       'Khu vực gửi xe: Vào theo cổng 7, hoặc đậu xe đối diện cổng 3 của trường (không biết cứ alo cho Minh đi).',
-      'Nên đến trước 15–30 phút để chuẩn bị và chụp ảnh lưu niệm cùng tân cử nhân.',
+      'Chú ý: 11h30 Mình vào hội trường mất rồi:<<',
       'Trang phục lịch sự, trang nhã để có những bức ảnh kỷ niệm đẹp nhất.',
     ],
   },

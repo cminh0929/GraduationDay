@@ -112,7 +112,7 @@ export const LocationSection: React.FC = () => {
                 <li className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-[#E44735] shrink-0 mt-0.5" />
                   <span>
-                    <strong className="text-[#17243A]">Khuôn viên trường:</strong> Nên đến trước 15–30 phút để chuẩn bị và chụp ảnh lưu niệm cùng tân cử nhân.
+                    <strong className="text-[#17243A]">Chú ý:</strong> 11h30 Mình vào hội trường mất rồi:&lt;&lt;
                   </span>
                 </li>
               </ul>
