@@ -210,12 +210,14 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Automatically fire celebration on web load
+    fireGrandCelebration();
+
     const params = new URLSearchParams(window.location.search);
     const codeParam = params.get('code');
     const personalizedPath = window.location.pathname.match(/^\/home\/([a-zA-Z0-9]{4,12})\/?$/i);
 
     if (!personalizedPath && !codeParam) {
-      fireGrandCelebration();
       return;
     }
 
@@ -238,7 +240,6 @@ export default function App() {
       })
       .then((guest) => {
         setCurrentGuest(guest);
-        fireGrandCelebration();
       })
       .catch((error) => {
         setLinkError(error instanceof Error ? error.message : 'Không thể mở liên kết thiệp mời.');
@@ -251,14 +252,9 @@ export default function App() {
     };
   }, []);
 
-  const handleReplayCelebration = () => {
-    hasCelebratedRef.current = false;
-    fireGrandCelebration();
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F5EF] text-[#17243A] selection:bg-[#15489D]/20 selection:text-[#15489D]">
-      <HeaderNav onReplayCelebration={handleReplayCelebration} />
+      <HeaderNav />
 
       <main className="flex-1 pb-16">
         {isResolvingLink ? (
