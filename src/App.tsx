@@ -5,7 +5,7 @@ import { PersonalizedInvitation } from './components/PersonalizedInvitation.tsx'
 import { Countdown } from './components/Countdown.tsx';
 import { LocationSection } from './components/LocationSection.tsx';
 import { ClosingSection } from './components/ClosingSection.tsx';
-import { RsvpSection } from './components/RsvpSection.tsx';
+import { WishSection } from './components/WishSection.tsx';
 import { AdminPanel } from './components/AdminPanel.tsx';
 import { FloatingCallBubble } from './components/FloatingCallBubble.tsx';
 import { PublicInvitationAccess } from './components/PublicInvitationAccess.tsx';
@@ -205,7 +205,10 @@ export default function App() {
     const codeParam = params.get('code');
     const personalizedPath = window.location.pathname.match(/^\/home\/([a-zA-Z0-9]{4,12})\/?$/i);
 
-    if (!personalizedPath && !codeParam) return;
+    if (!personalizedPath && !codeParam) {
+      fireGrandCelebration();
+      return;
+    }
 
     setIsResolvingLink(true);
     const request = personalizedPath
@@ -253,6 +256,18 @@ export default function App() {
           </div>
         ) : (
           <>
+            {/* If there's an error resolving a link, prompt user clearly */}
+            <PublicInvitationAccess
+              initialError={linkError}
+              onDismissError={() => setLinkError('')}
+              onResolveSuccess={(guest) => {
+                setLinkError('');
+                setCurrentGuest(guest);
+                fireGrandCelebration();
+              }}
+            />
+
+            {/* Main Luxury Academic Invitation Card */}
             {currentGuest ? (
               <PersonalizedInvitation
                 guestName={currentGuest.guestName}
@@ -261,41 +276,27 @@ export default function App() {
                 linkId={currentGuest.linkId}
               />
             ) : (
-              <>
-                <PublicInvitationAccess
-                  initialError={linkError}
-                  onDismissError={() => setLinkError('')}
-                  onResolveSuccess={(guest) => {
-                    setLinkError('');
-                    setCurrentGuest(guest);
-                    fireGrandCelebration();
-                  }}
-                />
-                <PersonalizedInvitation
-                  guestName="Bạn bè và những người thân quý"
-                  isGeneral
-                />
-              </>
+              <PersonalizedInvitation
+                guestName="Bạn bè và những người thân quý"
+                isGeneral
+              />
             )}
 
+            {/* Khung gửi lời chúc phía dưới thiệp luôn (trên thời gian) */}
+            <WishSection
+              currentGuest={currentGuest}
+              onWishSubmitted={(message) => {
+                if (currentGuest) {
+                  setCurrentGuest((previous) =>
+                    previous ? { ...previous, rsvpStatus: 'wish', rsvpMessage: message } : null
+                  );
+                }
+              }}
+            />
+
+            {/* Thời Gian (Countdown) */}
             <Countdown />
             <LocationSection />
-
-            {currentGuest && (
-              <div className="max-w-4xl mx-auto px-4">
-                <RsvpSection
-                  guestCode={currentGuest.code}
-                  guestName={currentGuest.guestName}
-                  initialMessage={currentGuest.rsvpMessage}
-                  onWishSubmitted={(message) => {
-                    setCurrentGuest((previous) =>
-                      previous ? { ...previous, rsvpStatus: 'wish', rsvpMessage: message } : null
-                    );
-                  }}
-                />
-              </div>
-            )}
-
             <ClosingSection />
           </>
         )}

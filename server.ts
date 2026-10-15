@@ -152,6 +152,8 @@ const GOOGLE_SHEET_WEBHOOK_URL =
 
 interface GoogleSheetPayload {
   action: 'open' | 'wish';
+  source?: 'personal' | 'public';
+  nickname?: string;
   guestName: string;
   salutation?: string;
   code: string;
@@ -162,19 +164,39 @@ interface GoogleSheetPayload {
   openedCount?: number;
 }
 
-async function syncToGoogleSheet(payload: GoogleSheetPayload): Promise<void> {
-  if (!GOOGLE_SHEET_WEBHOOK_URL) return;
+async function syncToGoogleSheet(
+  payload: GoogleSheetPayload
+): Promise<{ success: boolean; error?: string }> {
+  if (!GOOGLE_SHEET_WEBHOOK_URL) {
+    return { success: false, error: 'Chưa cấu hình GOOGLE_SHEET_WEBHOOK_URL trên máy chủ.' };
+  }
   try {
     const res = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) {
-      console.warn(`Google Sheet webhook responded with status ${res.status}`);
+
+    const text = await res.text();
+    let data: any = {};
+    try {
+      data = JSON.parse(text);
+    } catch {
+      if (!res.ok) {
+        return { success: false, error: `Google Apps Script phản hồi HTTP ${res.status}` };
+      }
     }
+
+    if (!res.ok || data.success === false) {
+      return {
+        success: false,
+        error: data.error || `Không thể ghi vào Google Sheets (HTTP ${res.status}).`,
+      };
+    }
+    return { success: true };
   } catch (err) {
     console.warn('Failed syncing to Google Sheet:', err);
+    return { success: false, error: 'Không thể kết nối đến Google Sheets.' };
   }
 }
 
@@ -307,47 +329,99 @@ app.get('/api/invitations/home/:linkId', (req: Request, res: Response) => {
 
 // 2. Guest RSVP / Wishes
 app.post('/api/invitations/rsvp', async (req: Request, res: Response) => {
-  const { code, status, message } = req.body || {};
-  if (!code || !['attending', 'maybe', 'remote', 'wish'].includes(status)) {
-    return res.status(400).json({ error: 'Dữ liệu phản hồi chưa hợp lệ.' });
+  const { action, source, nickname, code, status, message, linkId } = req.body || {};
+
+  const cleanMessage = (message || '').toString().trim() || 'Chúc mừng tốt nghiệp! 🎓💛';
+  if (cleanMessage.length > 1000) {
+    return res.status(400).json({ success: false, error: 'Lời chúc tối đa 1.000 ký tự.' });
   }
 
-  const guests = loadGuests();
-  const normalizedCode = code.toString().trim().toUpperCase();
-  const matched = guests.find((g) => g.code.toUpperCase() === normalizedCode && g.isActive);
+  // Determine if this is a personal or public wish
+  const isPersonal = source === 'personal' || Boolean(code);
 
-  if (!matched) {
-    return res.status(404).json({ error: 'Không tìm thấy thiệp mời này.' });
-  }
+  if (isPersonal) {
+    const rawCode = (code || '').toString().trim().toUpperCase();
+    if (!rawCode) {
+      return res.status(400).json({ success: false, error: 'Mã thiệp mời không được để trống.' });
+    }
 
-  matched.rsvpStatus = status;
-  matched.rsvpMessage = (message || '').toString().slice(0, 1000);
-  matched.rsvpUpdatedAt = new Date().toISOString();
-  saveGuests(guests);
+    const guests = loadGuests();
+    const matched = guests.find((g) => g.code.toUpperCase() === rawCode && g.isActive);
 
-  // Sync to Google Sheet asynchronously
-  syncToGoogleSheet({
-    action: 'wish',
-    guestName: matched.guestName,
-    salutation: matched.salutation || '',
-    code: matched.code,
-    status: status,
-    message: matched.rsvpMessage || '',
-    timestamp: matched.rsvpUpdatedAt,
-  }).catch((err) => console.warn('Google Sheet sync error:', err));
+    if (!matched) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy thiệp mời này.' });
+    }
 
-  return res.json({
-    success: true,
-    message: 'Cảm ơn bạn đã phản hồi! Minh rất trân trọng tình cảm của bạn.',
-    guest: {
-      id: matched.id,
-      code: matched.code,
+    matched.rsvpStatus = (status || 'wish') as any;
+    matched.rsvpMessage = cleanMessage;
+    matched.rsvpUpdatedAt = new Date().toISOString();
+    saveGuests(guests);
+
+    // Sync to Google Sheet and check response
+    const sheetResult = await syncToGoogleSheet({
+      action: 'wish',
+      source: 'personal',
       guestName: matched.guestName,
-      salutation: matched.salutation,
-      rsvpStatus: matched.rsvpStatus,
-      rsvpMessage: matched.rsvpMessage,
-    },
-  });
+      salutation: matched.salutation || '',
+      code: matched.code,
+      linkId: matched.linkId || linkId || '',
+      status: matched.rsvpStatus,
+      message: matched.rsvpMessage,
+      timestamp: matched.rsvpUpdatedAt,
+    });
+
+    if (!sheetResult.success) {
+      return res.status(502).json({
+        success: false,
+        error: sheetResult.error || 'Lỗi khi lưu vào Google Sheets.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Mình nhận được lời chúc rồi, cảm ơn bạn nhé! 💛',
+      guest: {
+        id: matched.id,
+        code: matched.code,
+        guestName: matched.guestName,
+        salutation: matched.salutation,
+        rsvpStatus: matched.rsvpStatus,
+        rsvpMessage: matched.rsvpMessage,
+      },
+    });
+  } else {
+    // Public invitation wish: allow empty nickname, fallback to "Người bạn ẩn danh"
+    const cleanNickname = (nickname || req.body.guestName || '').toString().trim() || 'Người bạn ẩn danh';
+    if (cleanNickname.length > 60) {
+      return res.status(400).json({ success: false, error: 'Tên gọi không được vượt quá 60 ký tự.' });
+    }
+
+    const timestamp = new Date().toISOString();
+    const sheetResult = await syncToGoogleSheet({
+      action: 'wish',
+      source: 'public',
+      nickname: cleanNickname,
+      guestName: cleanNickname,
+      salutation: '',
+      code: '',
+      linkId: (linkId || '').toString().trim(),
+      status: '',
+      message: cleanMessage,
+      timestamp,
+    });
+
+    if (!sheetResult.success) {
+      return res.status(502).json({
+        success: false,
+        error: sheetResult.error || 'Lỗi khi lưu vào Google Sheets.',
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Mình nhận được lời chúc rồi, cảm ơn bạn nhé! 💛',
+    });
+  }
 });
 
 /* ==========================================================================
