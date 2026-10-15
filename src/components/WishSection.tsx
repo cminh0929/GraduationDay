@@ -85,26 +85,26 @@ export const WishSection: React.FC<WishSectionProps> = ({
     // Build payload strictly adhering to specification
     const payload = currentGuest
       ? {
-          action: 'wish',
-          source: 'personal',
-          guestName: currentGuest.guestName,
-          salutation: currentGuest.salutation || '',
-          code: currentGuest.code,
-          linkId: currentGuest.linkId || '',
-          status: currentGuest.rsvpStatus || 'wish',
-          message: finalMessage,
-        }
+        action: 'wish',
+        source: 'personal',
+        guestName: currentGuest.guestName,
+        salutation: currentGuest.salutation || '',
+        code: currentGuest.code,
+        linkId: currentGuest.linkId || '',
+        status: currentGuest.rsvpStatus || 'wish',
+        message: finalMessage,
+      }
       : {
-          action: 'wish',
-          source: 'public',
-          nickname: cleanNickname,
-          guestName: finalNickname,
-          salutation: '',
-          code: '',
-          linkId: '',
-          status: '',
-          message: finalMessage,
-        };
+        action: 'wish',
+        source: 'public',
+        nickname: cleanNickname,
+        guestName: finalNickname,
+        salutation: '',
+        code: '',
+        linkId: '',
+        status: '',
+        message: finalMessage,
+      };
 
     try {
       const res = await fetch('/api/invitations/rsvp', {
@@ -219,7 +219,7 @@ export const WishSection: React.FC<WishSectionProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label htmlFor="wish-nickname" className="block text-xs font-semibold text-slate-700">
-                    Tên gọi / Nickname
+                    Tên của bạn / Nickname
                   </label>
                   <span className="text-[10px] font-mono text-slate-400 tabular-nums">
                     {nickname.length}/{MAX_NICKNAME_LENGTH}
@@ -297,11 +297,10 @@ export const WishSection: React.FC<WishSectionProps> = ({
                     animate={{ opacity: 1, y: 0 }}
                     exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
                     transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className={`p-3.5 rounded-xl text-xs sm:text-sm border flex items-start gap-2.5 shadow-2xs ${
-                      feedback.type === 'success'
+                    className={`p-3.5 rounded-xl text-xs sm:text-sm border flex items-start gap-2.5 shadow-2xs ${feedback.type === 'success'
                         ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                         : 'bg-red-50 text-red-800 border-red-200'
-                    }`}
+                      }`}
                   >
                     {feedback.type === 'success' ? (
                       <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 mt-0.5" />
