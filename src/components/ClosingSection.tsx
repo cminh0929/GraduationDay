@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { EVENT_CONFIG } from '../config/event.ts';
 import { SunflowerIcon, GraduationCapIcon, DiplomaScrollIcon } from './SunflowerCapMotif.tsx';
+import { playSoftFirework, playSparkleShower } from '../utils/fireworkSound.ts';
 
 // -----------------------------------------------------------------------
 // CapTossAnimation: a small animated graduation cap that flips/tosses up
@@ -89,8 +90,13 @@ export const ClosingSection: React.FC = () => {
         disableForReducedMotion: true,
       });
 
+      // Soft celebratory firework sounds
+      playSoftFirework(-0.25);
+      playSoftFirework(0.25);
+
       // Center soft gold shower
       setTimeout(() => {
+        playSparkleShower(0);
         confetti({
           particleCount: 22,
           angle: 90,

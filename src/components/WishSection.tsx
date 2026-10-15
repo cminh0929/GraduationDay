@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import confetti from 'canvas-confetti';
 import { CheckCircle2, Send, Loader2, AlertCircle, User, Sparkles } from 'lucide-react';
 import { GraduationCapIcon, SunflowerIcon } from './SunflowerCapMotif.tsx';
 import { GraduationWavingMascot } from './GraduationWavingMascot.tsx';
+import { playBurst } from '../utils/fireworkSound.ts';
 
 interface WishSectionGuest {
   id: string;
@@ -120,6 +122,22 @@ export const WishSection: React.FC<WishSectionProps> = ({
           type: 'success',
           text: 'Mình nhận được lời chúc rồi, cảm ơn bạn nhé! 💛',
         });
+
+        // Festive celebration upon wish sent
+        playBurst({ pan: 0, pitch: 1.15, intensity: 0.85, withCrackles: true });
+        if (!shouldReduceMotion) {
+          confetti({
+            particleCount: 35,
+            spread: 70,
+            origin: { y: 0.65 },
+            colors: ['#D6B274', '#F5B700', '#15489D', '#E44735', '#FFFFFF'],
+            ticks: 200,
+            gravity: 0.85,
+            scalar: 0.85,
+            disableForReducedMotion: true,
+          });
+        }
+
         if (onWishSubmitted) {
           onWishSubmitted(finalMessage);
         }

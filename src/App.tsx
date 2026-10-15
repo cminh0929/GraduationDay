@@ -10,6 +10,7 @@ import { AdminPanel } from './components/AdminPanel.tsx';
 import { FloatingCallBubble } from './components/FloatingCallBubble.tsx';
 import { PublicInvitationAccess } from './components/PublicInvitationAccess.tsx';
 import { EVENT_CONFIG } from './config/event.ts';
+import { playGrandFireworkSequence, unlockAudio } from './utils/fireworkSound.ts';
 
 type CurrentGuest = {
   id: string;
@@ -39,12 +40,28 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Unlock audio context on user's first touch/click
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      unlockAudio();
+    };
+    window.addEventListener('pointerdown', handleFirstInteraction, { once: true });
+    window.addEventListener('keydown', handleFirstInteraction, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, []);
+
   // Grand Graduation Fireworks Celebration
   const fireGrandCelebration = () => {
     if (typeof window === 'undefined') return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (hasCelebratedRef.current) return;
     hasCelebratedRef.current = true;
+
+    // Trigger synchronized celebratory firework sound
+    playGrandFireworkSequence();
 
     // Clear any previous scheduled bursts
     activeTimeoutsRef.current.forEach((t) => clearTimeout(t));
