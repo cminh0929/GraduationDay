@@ -472,5 +472,15 @@
     "isActive": true,
     "createdAt": "2026-10-14T10:53:16.679Z",
     "openedCount": 0
+  },
+  {
+    "id": "guest_0048",
+    "linkId": "H5L3",
+    "code": "CM-BICHHOA",
+    "guestName": "Phạm Thị Bích Hoa",
+    "salutation": "Em",
+    "isActive": true,
+    "createdAt": "2026-10-16T06:38:23.679Z",
+    "openedCount": 0
   }
 ]
